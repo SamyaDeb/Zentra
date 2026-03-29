@@ -15,11 +15,26 @@
 
 | Resource | Link |
 |----------|------|
-| **Live Demo** | [https://zentra-stellar.vercel.app](https://zentra-stellar.vercel.app) |
+| **Live Demo** | [https://zentra-flame.vercel.app](https://zentra-flame.vercel.app) |
 | **Demo Video** | [Watch on YouTube](https://youtube.com/watch?v=zentra-demo) |
 | **Smart Contract** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27) |
-| **Monitoring Dashboard** | [/monitoring](https://zentra-stellar.vercel.app/monitoring) |
+| **Monitoring Dashboard** | [/monitoring](https://zentra-flame.vercel.app/monitoring) |
 | **Community Post** | [Twitter/X Post](https://twitter.com/SamyaDeb/zentra) |
+
+---
+
+## Level 5 Hackathon Submission Checklist
+
+| Requirement | Status | Evidence |
+|-------------|--------|----------|
+| **Live Demo Deployed** | ✅ Complete | [https://zentra-flame.vercel.app](https://zentra-flame.vercel.app) |
+| **CI/CD Pipeline** | ✅ Complete | ![CI/CD](https://github.com/SamyaDeb/Zentra/actions/workflows/ci.yml/badge.svg) |
+| **Smart Contract Deployed** | ✅ Complete | `CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27` |
+| **Mobile Responsive** | ✅ Complete | See screenshots below |
+| **5 Loan Tiers Implemented** | ✅ Complete | Trust score ranges: 0-59, 60-69, 70-79, 80-89, 90-100 |
+| **Documentation** | ✅ Complete | ARCHITECTURE.md, TECHNICAL_DOCS.md, USER_GUIDE.md |
+| **Security Audit** | ✅ Complete | SECURITY_CHECKLIST.md |
+| **35+ Registered Users** | ✅ Complete | REGISTERED_USERS.csv |
 
 ---
 
@@ -49,7 +64,7 @@
 | **Contract Address** | `CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27` |
 | **Token Contract (XLM SAC)** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
 | **Network** | Stellar Testnet (Soroban) |
-| **Sample Transaction Hash** | `a1b2c3d4e5f6789...` |
+| **Sample Transaction Hash** | [`View on Stellar Expert`](https://stellar.expert/explorer/testnet/contract/CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27) |
 
 [View all transactions on Stellar Expert →](https://stellar.expert/explorer/testnet/contract/CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27)
 
@@ -136,7 +151,7 @@ Zentra integrates with Stellar anchors for fiat on/off ramps:
 - **SEP-24 Withdraw:** Convert XLM back to fiat currency
 - **SEP-31 Send:** Cross-border remittances via direct payment protocol
 
-[Access Cross-Border Features →](https://zentra-stellar.vercel.app/cross-border)
+[Access Cross-Border Features →](https://zentra-flame.vercel.app/cross-border)
 
 ### Data Indexing Approach
 
