@@ -16,10 +16,9 @@
 | Resource | Link |
 |----------|------|
 | **Live Demo** | [https://zentra-flame.vercel.app](https://zentra-flame.vercel.app) |
-| **Demo Video** | [Watch on YouTube](https://youtube.com/watch?v=zentra-demo) |
+| **Demo Video** | [Watch on YouTube]([https://youtube.com/watch?v=zentra-demo](https://youtu.be/wu8JSs2Qkpc?si=Mn8qH6Nyn62rwfKA)) |
 | **Smart Contract** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27) |
 | **Monitoring Dashboard** | [/monitoring](https://zentra-flame.vercel.app/monitoring) |
-| **Community Post** | [Twitter/X Post](https://twitter.com/SamyaDeb/zentra) |
 
 ---
 
@@ -28,7 +27,7 @@
 | Requirement | Status | Evidence |
 |-------------|--------|----------|
 | **Live Demo Deployed** | ✅ Complete | [https://zentra-flame.vercel.app](https://zentra-flame.vercel.app) |
-| **CI/CD Pipeline** | ✅ Complete | ![CI/CD](https://github.com/SamyaDeb/Zentra/actions/workflows/ci.yml/badge.svg) |
+| **CI/CD Pipeline** | ✅ Complete | ![CI/CD]([https://github.com/SamyaDeb/Zentra/actions/workflows/ci.yml/badge.svg)](https://github.com/SamyaDeb/Zentra/actions/runs/23719242981) |
 | **Smart Contract Deployed** | ✅ Complete | `CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27` |
 | **Mobile Responsive** | ✅ Complete | See screenshots below |
 | **5 Loan Tiers Implemented** | ✅ Complete | Trust score ranges: 0-59, 60-69, 70-79, 80-89, 90-100 |
@@ -40,20 +39,13 @@
 
 ## Screenshots
 
-### Wallet Connected State
-![Wallet Connected](https://github.com/user-attachments/assets/wallet-connected.png)
-
-### Balance Displayed
-![Balance Display](https://github.com/user-attachments/assets/balance-display.png)
-
-### Successful Transaction
-![Transaction Success](https://github.com/user-attachments/assets/tx-success.png)
-
 ### Mobile Responsive View
-![Mobile View](https://github.com/user-attachments/assets/mobile-view.png)
+![Mobile View](<img width="385" height="650" alt="Screenshot 2026-03-30 at 2 48 25 AM" src="https://github.com/user-attachments/assets/005b4a68-701c-489e-b678-25409ad9d5b7" />
+)
 
 ### CI/CD Pipeline
-![CI/CD Running](https://github.com/user-attachments/assets/cicd-pipeline.png)
+![CI/CD Running](<img width="1470" height="706" alt="Screenshot 2026-03-30 at 2 39 49 AM" src="https://github.com/user-attachments/assets/340e5fbf-f7c6-415b-99ba-20351ae6a24e" />
+)
 
 ---
 
