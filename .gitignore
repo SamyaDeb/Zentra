@@ -52,3 +52,4 @@ artifacts/
 
 # package manager locks (optional — remove if you want to commit these)
 # package-lock.json
+.env*.local

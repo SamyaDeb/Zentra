@@ -2,10 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAccount } from 'wagmi';
-import type { Address } from 'viem';
-
-const ADMIN_ADDRESS: Address = '0x74E36d4A7b33057e3928CE4bf4C8C53A93361C34';
+import { useFreighterWallet } from './useStellar';
+import { CONTRACT_CONFIG } from '../../config/stellarConfig';
 
 /**
  * Custom hook to redirect users based on their role
@@ -23,25 +21,23 @@ const ADMIN_ADDRESS: Address = '0x74E36d4A7b33057e3928CE4bf4C8C53A93361C34';
  */
 export function useRoleRedirect() {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
+  const { publicKey, isConnected, isAdmin } = useFreighterWallet();
 
   useEffect(() => {
-    if (!isConnected || !address) {
+    if (!isConnected || !publicKey) {
       return;
     }
-
-    const isAdmin = address.toLowerCase() === ADMIN_ADDRESS.toLowerCase();
 
     if (isAdmin) {
       router.push('/admin');
     } else {
       router.push('/user');
     }
-  }, [address, isConnected, router]);
+  }, [publicKey, isConnected, isAdmin, router]);
 
   return {
-    address,
+    publicKey,
     isConnected,
-    isAdmin: address?.toLowerCase() === ADMIN_ADDRESS.toLowerCase(),
+    isAdmin,
   };
 }

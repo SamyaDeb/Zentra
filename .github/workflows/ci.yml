@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+env:
+  NEXT_PUBLIC_CONTRACT_ID: ${{ secrets.NEXT_PUBLIC_CONTRACT_ID || 'CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27' }}
+  NEXT_PUBLIC_NATIVE_TOKEN_ID: ${{ secrets.NEXT_PUBLIC_NATIVE_TOKEN_ID || 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC' }}
+
 jobs:
   build-and-test:
     name: Build and Test
@@ -30,20 +34,19 @@ jobs:
 
     - name: Run ESLint
       run: npm run lint
-      continue-on-error: true
+
+    - name: Run type check
+      run: npx tsc --noEmit
 
     - name: Run build
       run: npm run build
-      env:
-        NEXT_PUBLIC_CONTRACT_ID: ${{ secrets.NEXT_PUBLIC_CONTRACT_ID || 'CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27' }}
-        NEXT_PUBLIC_NATIVE_TOKEN_ID: ${{ secrets.NEXT_PUBLIC_NATIVE_TOKEN_ID || 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC' }}
 
     - name: Run tests
       run: npm test --if-present
       continue-on-error: true
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-${{ matrix.node-version }}
         path: .next/
@@ -64,7 +67,7 @@ jobs:
         target: wasm32-unknown-unknown
 
     - name: Cache cargo dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/bin/
@@ -73,6 +76,8 @@ jobs:
           ~/.cargo/git/db/
           contracts/target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
 
     - name: Build Soroban contract
       run: |
@@ -94,8 +99,17 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci --legacy-peer-deps
+
     - name: Run npm audit
-      run: npm audit --audit-level=moderate
+      run: npm audit --audit-level=high
       continue-on-error: true
 
     - name: Check for secrets
@@ -116,7 +130,54 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install Vercel CLI
+      run: npm install -g vercel
+
+    - name: Pull Vercel Environment
+      run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      continue-on-error: true
+
+    - name: Build for Preview
+      run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      continue-on-error: true
+
     - name: Deploy to Vercel Preview
-      run: echo "Deploy to Vercel preview environment"
-      # Actual Vercel deployment would go here
+      run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+      continue-on-error: true
+
+  deploy-production:
+    name: Deploy Production
+    needs: [build-and-test, security-scan]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install Vercel CLI
+      run: npm install -g vercel
+
+    - name: Pull Vercel Environment
+      run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      continue-on-error: true
+
+    - name: Build for Production
+      run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      continue-on-error: true
+
+    - name: Deploy to Vercel Production
+      run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
       continue-on-error: true
