@@ -16,7 +16,7 @@
 | Resource | Link |
 |----------|------|
 | **Live Demo** | [https://zentra-flame.vercel.app](https://zentra-flame.vercel.app) |
-| **Demo Video** | [Watch on YouTube]([https://youtube.com/watch?v=zentra-demo](https://youtu.be/wu8JSs2Qkpc?si=Mn8qH6Nyn62rwfKA)) |
+| **Demo Video** | [Watch on YouTube]([https://youtu.be/wu8JSs2Qkpc?si=3HYdR1cBmW340v8s]) |
 | **Smart Contract** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27) |
 | **Monitoring Dashboard** | [/monitoring](https://zentra-flame.vercel.app/monitoring) |
 
