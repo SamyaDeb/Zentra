@@ -40,12 +40,11 @@
 ## Screenshots
 
 ### Mobile Responsive View
-![Mobile View](<img width="385" height="650" alt="Screenshot 2026-03-30 at 2 48 25 AM" src="https://github.com/user-attachments/assets/005b4a68-701c-489e-b678-25409ad9d5b7" />
-)
+<img width="385" height="650" alt="Screenshot 2026-03-30 at 2 48 25 AM" src="https://github.com/user-attachments/assets/f8c383f3-189d-447e-a6fd-fdd6b51de6ce" />
+
 
 ### CI/CD Pipeline
-![CI/CD Running](<img width="1470" height="706" alt="Screenshot 2026-03-30 at 2 39 49 AM" src="https://github.com/user-attachments/assets/340e5fbf-f7c6-415b-99ba-20351ae6a24e" />
-)
+<img width="1470" height="706" alt="Screenshot 2026-03-30 at 2 39 49 AM" src="https://github.com/user-attachments/assets/57d788dc-afd4-4643-97a1-ee1bc3150a38" />
 
 ---
 
