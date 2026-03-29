@@ -33,7 +33,7 @@
 | **5 Loan Tiers Implemented** | ✅ Complete | Trust score ranges: 0-59, 60-69, 70-79, 80-89, 90-100 |
 | **Documentation** | ✅ Complete | ARCHITECTURE.md, TECHNICAL_DOCS.md, USER_GUIDE.md |
 | **Security Audit** | ✅ Complete | SECURITY_CHECKLIST.md |
-| **35+ Registered Users** | ✅ Complete | REGISTERED_USERS.csv |
+| **Registered Users** | ✅ Complete | 5 verified beta testers |
 
 ---
 
@@ -156,21 +156,15 @@ See [DATA_INDEXING.md](./DATA_INDEXING.md) for detailed documentation.
 
 ---
 
-## Registered Users (35+ Verified)
+## Registered Users (Beta Testers)
 
-| # | Wallet Address | Name | Circle | Trust Score | Status |
-|---|---------------|------|--------|-------------|--------|
-| 1 | GBXR7KPJ...DFGH | Rahul Sharma | Circle Alpha | 72 | Active |
-| 2 | GCPQ8YWL...SDFGHJ | Priya Patel | Circle Alpha | 68 | Active |
-| 3 | GDLK4MXH...XCVBN | Amit Kumar | Circle Alpha | 55 | Active |
-| 4 | GAXN3PLQ...ASDFG | Sneha Reddy | Circle Beta | 81 | Active |
-| 5 | GBHT6KWM...SDFGH | Vikram Singh | Circle Beta | 65 | Active |
-| ... | ... | ... | ... | ... | ... |
-| 35 | GXBQ0OT3...CVBNM | Prakash Nair | Circle Mu | 64 | Active |
-
-[View Full User List (CSV) →](./REGISTERED_USERS.csv)
-
-[Verify on Stellar Expert →](https://stellar.expert/explorer/testnet)
+| # | Wallet Address | Status | Verified |
+|---|----------------|--------|----------|
+| 1 | `GDDEMSPPQN72KNJJNCCOTIINYCSFZV6SGI5UCOFMBBXK3UMUQ5E23REJ` | Active | [View on Stellar Expert](https://stellar.expert/explorer/testnet/account/GDDEMSPPQN72KNJJNCCOTIINYCSFZV6SGI5UCOFMBBXK3UMUQ5E23REJ) |
+| 2 | `GBC6CGPG3JVSHEGO3TVMSHJ6UAVL4OA4H4TZSH4P7TRTF2V3RRFVOVHJ` | Active | [View on Stellar Expert](https://stellar.expert/explorer/testnet/account/GBC6CGPG3JVSHEGO3TVMSHJ6UAVL4OA4H4TZSH4P7TRTF2V3RRFVOVHJ) |
+| 3 | `GA3QEKYH3AJUF37L5CW66QNAIGCMRUBRHPLTM74HDHA4BHCE2TYI5ZNC` | Active | [View on Stellar Expert](https://stellar.expert/explorer/testnet/account/GA3QEKYH3AJUF37L5CW66QNAIGCMRUBRHPLTM74HDHA4BHCE2TYI5ZNC) |
+| 4 | `GAID6F2HZ57QELA3SEJOVRA4VJU5BTJJKJZU6LQ4EJJLZAHF7P6S5XZO` | Active | [View on Stellar Expert](https://stellar.expert/explorer/testnet/account/GAID6F2HZ57QELA3SEJOVRA4VJU5BTJJKJZU6LQ4EJJLZAHF7P6S5XZO) |
+| 5 | `GCVDMNBJNKZFW5RVCARGIUAAAL364ODLPYDYM4UKGUJTS6NZG55H3M2J` | Active | [View on Stellar Expert](https://stellar.expert/explorer/testnet/account/GCVDMNBJNKZFW5RVCARGIUAAAL364ODLPYDYM4UKGUJTS6NZG55H3M2J) |
 
 ---
 
@@ -280,7 +274,7 @@ Zentra/
 ├── SECURITY_CHECKLIST.md       # Security checklist
 ├── DATA_INDEXING.md            # Data indexing approach
 ├── FEEDBACK.md                 # User feedback
-└── REGISTERED_USERS.csv        # Registered users list
+└── REGISTERED_USERS.csv        # Beta tester wallet addresses
 ```
 
 ---
