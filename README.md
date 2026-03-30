@@ -27,7 +27,7 @@
 | Requirement | Status | Evidence |
 |-------------|--------|----------|
 | **Live Demo Deployed** | ✅ Complete | [https://zentra-flame.vercel.app](https://zentra-flame.vercel.app) |
-| **CI/CD Pipeline** | ✅ Complete | (https://github.com/SamyaDeb/Zentra/actions/workflows/ci.yml/badge.svg)(https://github.com/SamyaDeb/Zentra/actions/runs/23719242981) |
+| **CI/CD Pipeline** | ✅ Complete |(https://github.com/SamyaDeb/Zentra/actions/runs/23719242981) |
 | **Smart Contract Deployed** | ✅ Complete | `CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27` |
 | **Mobile Responsive** | ✅ Complete | See screenshots below |
 | **5 Loan Tiers Implemented** | ✅ Complete | Trust score ranges: 0-59, 60-69, 70-79, 80-89, 90-100 |
