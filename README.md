@@ -8,6 +8,7 @@
 ![Status](https://img.shields.io/badge/Status-Live%20MVP-green)
 ![Network](https://img.shields.io/badge/Network-Stellar%20Testnet-brightgreen)
 ![CI/CD](https://github.com/SamyaDeb/Zentra/actions/workflows/ci.yml/badge.svg)
+![Real Users Excel Sheet](https://1drv.ms/x/c/9f264c155550732d/IQDv6drh97jETYdn9E1coIINAdDjcHDkIybLHCs_1tp4OFQ?e=Mz8Jci)
 
 ---
 
