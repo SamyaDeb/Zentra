@@ -32,7 +32,7 @@
 | **5 Loan Tiers Implemented** | ✅ Complete | Trust score ranges: 0-59, 60-69, 70-79, 80-89, 90-100 |
 | **Documentation** | ✅ Complete | ARCHITECTURE.md, TECHNICAL_DOCS.md, USER_GUIDE.md |
 | **Security Audit** | ✅ Complete | SECURITY_CHECKLIST.md |
-| **Registered Users** | ✅ Complete | [5 verified users](https://1drv.ms/x/c/9f264c155550732d/IQDv6drh97jETYdn9E1coIINAdDjcHDkIybLHCs_1tp4OFQ?e=jjMH5q) |
+| **Registered Users** | ✅ Complete | [5+ verified users Excel Sheet Data](https://1drv.ms/x/c/9f264c155550732d/IQDv6drh97jETYdn9E1coIINAdDjcHDkIybLHCs_1tp4OFQ?e=jjMH5q) |
 
 ---
 
