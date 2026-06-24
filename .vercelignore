@@ -1,0 +1,21 @@
+# Vercel build ignores - optimize deployment size
+node_modules
+.next
+.git
+.DS_Store
+*.log
+*.tsbuildinfo
+
+# Development files
+.env.local
+.env*.local
+
+# Contract source (not needed for frontend deployment)
+contracts/target
+contracts/.soroban
+
+# Logo folder in root (use public/Logo instead)
+Logo
+
+# Build artifacts
+tsconfig.tsbuildinfo
