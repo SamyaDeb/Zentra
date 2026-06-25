@@ -1,8 +1,49 @@
 /**
  * Stellar Contract Client for Zentra TrustCircles
- * 
+ *
  * This module provides functions to interact with the TrustCircles
- * Soroban smart contract on Stellar.
+ * Soroban smart contract on Stellar (Contract ID: CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27).
+ *
+ * CONTRACT FUNCTION MAPPING (lib.rs → stellar.ts):
+ * ─────────────────────────────────────────────────
+ * Contract Function          Frontend Function
+ * ─────────────────────────────────────────────────
+ * initialize()               (one-time deploy step, not exposed)
+ *
+ * Circle Management:
+ *   create_circle()        → createCircleCall()   [write]
+ *   join_circle()          → joinCircleCall()     [write]
+ *
+ * Scoring (read-only):
+ *   get_circle_average_score() → (called internally)
+ *   get_trust_score()          → getTrustScore()
+ *   get_max_loan_amount()      → getMaxLoanAmount()
+ *   get_interest_rate()        → getInterestRate()
+ *
+ * Loan Management:
+ *   request_loan()         → requestLoanCall()    [write]
+ *   approve_loan()         → approveLoanCall()    [write, admin]
+ *   repay_loan()           → repayLoanCall()      [write]
+ *   penalize_default()     → penalizeDefaultCall() [write, admin]
+ *
+ * Admin:
+ *   deposit_liquidity()    → depositLiquidityCall() [write, admin]
+ *   withdraw()             → withdrawCall()          [write, admin]
+ *   set_demo_mode()        → setDemoModeCall()       [write, admin]
+ *   set_demo_loan_duration() → setDemoLoanDurationCall() [write, admin]
+ *   unfreeze_account()     → unfreezeAccountCall()   [write, admin]
+ *
+ * View Functions (read-only):
+ *   get_user_stats()       → getUserStats()
+ *   get_circle_details()   → getCircleDetails()
+ *   get_loan_details()     → getLoanDetails()
+ *   get_user_loans()       → getUserLoans()
+ *   is_loan_overdue()      → isLoanOverdue()
+ *   get_contract_balance() → getContractBalance()
+ *   get_admin()            → getAdmin()
+ *   get_circle_count()     → getCircleCount()
+ *   get_loan_count()       → getLoanCount()
+ *   is_demo_mode()         → isDemoMode()
  */
 
 import {
@@ -350,6 +391,71 @@ export async function getAdmin(sourceAccount: string): Promise<string> {
     "get_admin",
     []
   );
-  
+
   return parseContractResponse<string>(result);
+}
+
+// ============ WRITE FUNCTION WRAPPERS ============
+// These expose contract write functions as plain async helpers.
+// React hooks in useStellar.ts wrap these with transaction signing.
+
+export async function createCircleCall(
+  publicKey: string,
+  name: string
+): Promise<xdr.ScVal[]> {
+  return [new Address(publicKey).toScVal(), nativeToScVal(name, { type: "string" })];
+}
+
+export async function joinCircleCall(
+  publicKey: string,
+  circleId: number
+): Promise<xdr.ScVal[]> {
+  return [new Address(publicKey).toScVal(), nativeToScVal(circleId, { type: "u32" })];
+}
+
+export async function requestLoanCall(
+  publicKey: string,
+  amountStroops: bigint,
+  purpose: string
+): Promise<xdr.ScVal[]> {
+  return [
+    new Address(publicKey).toScVal(),
+    nativeToScVal(amountStroops, { type: "i128" }),
+    nativeToScVal(purpose, { type: "string" }),
+  ];
+}
+
+export async function approveLoanCall(loanId: number): Promise<xdr.ScVal[]> {
+  return [nativeToScVal(loanId, { type: "u32" })];
+}
+
+export async function repayLoanCall(
+  publicKey: string,
+  loanId: number
+): Promise<xdr.ScVal[]> {
+  return [new Address(publicKey).toScVal(), nativeToScVal(loanId, { type: "u32" })];
+}
+
+export async function penalizeDefaultCall(loanId: number): Promise<xdr.ScVal[]> {
+  return [nativeToScVal(loanId, { type: "u32" })];
+}
+
+export async function depositLiquidityCall(amountStroops: bigint): Promise<xdr.ScVal[]> {
+  return [nativeToScVal(amountStroops, { type: "i128" })];
+}
+
+export async function withdrawCall(amountStroops: bigint): Promise<xdr.ScVal[]> {
+  return [nativeToScVal(amountStroops, { type: "i128" })];
+}
+
+export async function setDemoModeCall(enabled: boolean): Promise<xdr.ScVal[]> {
+  return [nativeToScVal(enabled, { type: "bool" })];
+}
+
+export async function setDemoLoanDurationCall(durationLedgers: number): Promise<xdr.ScVal[]> {
+  return [nativeToScVal(durationLedgers, { type: "u32" })];
+}
+
+export async function unfreezeAccountCall(userAddress: string): Promise<xdr.ScVal[]> {
+  return [new Address(userAddress).toScVal()];
 }

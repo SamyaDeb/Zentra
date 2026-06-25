@@ -277,6 +277,59 @@ Zentra/
 
 ---
 
+## Frontend ↔ Contract Integration
+
+The frontend integrates directly with the deployed TrustCircles Soroban contract via `@stellar/stellar-sdk` and `@stellar/freighter-api`.
+
+### Integration Files
+
+| File | Purpose |
+|---|---|
+| `src/lib/stellar.ts` | Low-level contract client — builds, simulates, and submits Soroban transactions |
+| `src/hooks/useStellar.ts` | React hooks wrapping every contract function with wallet signing via Freighter |
+| `app/user/page.tsx` | User dashboard — calls `useCreateCircle`, `useJoinCircle`, `useRequestLoan`, `useRepayLoan` |
+| `app/admin/page.tsx` | Admin panel — calls `useDepositLiquidity`, `useApproveLoan`, `useSetDemoMode`, `useWithdraw`, `usePenalizeDefault`, `useUnfreezeAccount` |
+
+### Contract Function → Frontend Mapping
+
+Every public function in `contracts/trust_circles/src/lib.rs` has a corresponding frontend call:
+
+| `lib.rs` Function | `stellar.ts` Helper | `useStellar.ts` Hook | UI Page |
+|---|---|---|---|
+| `create_circle(creator, name)` | args built inline | `useCreateCircle()` | `app/user/page.tsx` |
+| `join_circle(member, circle_id)` | args built inline | `useJoinCircle()` | `app/user/page.tsx` |
+| `request_loan(borrower, amount, purpose)` | args built inline | `useRequestLoan()` | `app/user/page.tsx` |
+| `repay_loan(borrower, loan_id)` | args built inline | `useRepayLoan()` | `app/user/page.tsx` |
+| `approve_loan(loan_id)` | args built inline | `useApproveLoan()` | `app/admin/page.tsx` |
+| `deposit_liquidity(amount)` | args built inline | `useDepositLiquidity()` | `app/admin/page.tsx` |
+| `withdraw(amount)` | `withdrawCall()` | `useWithdraw()` | `app/admin/page.tsx` |
+| `set_demo_mode(enabled)` | args built inline | `useSetDemoMode()` | `app/admin/page.tsx` |
+| `set_demo_loan_duration(duration)` | `setDemoLoanDurationCall()` | `useSetDemoLoanDuration()` | Admin panel |
+| `penalize_default(loan_id)` | `penalizeDefaultCall()` | `usePenalizeDefault()` | Admin panel |
+| `unfreeze_account(user)` | `unfreezeAccountCall()` | `useUnfreezeAccount()` | Admin panel |
+| `get_user_stats(user)` | `getUserStats()` | `useUserStats()` | `app/user/page.tsx` |
+| `get_circle_details(id)` | `getCircleDetails()` | `useCircleDetails()` | `app/user/page.tsx` |
+| `get_loan_details(id)` | `getLoanDetails()` | `useUserLoansData()` | `app/user/page.tsx` |
+| `get_user_loans(user)` | `getUserLoans()` | `useUserLoansData()` | `app/user/page.tsx` |
+| `get_trust_score(user)` | `getTrustScore()` | (via `useUserStats`) | `app/user/page.tsx` |
+| `get_max_loan_amount(user)` | `getMaxLoanAmount()` | (via `useUserStats`) | `app/user/page.tsx` |
+| `get_interest_rate(user)` | `getInterestRate()` | (via `useUserStats`) | `app/user/page.tsx` |
+| `get_contract_balance()` | `getContractBalance()` | `useContractBalanceData()` | `app/admin/page.tsx` |
+| `get_circle_count()` | `getCircleCount()` | `useAllCircles()` | Both pages |
+| `get_loan_count()` | `getLoanCount()` | `useAllPendingLoans()` | `app/admin/page.tsx` |
+| `is_loan_overdue(id)` | `isLoanOverdue()` | (used in loan views) | `app/user/page.tsx` |
+| `is_demo_mode()` | `isDemoMode()` | (admin state read) | `app/admin/page.tsx` |
+| `get_admin()` | `getAdmin()` | (auth check) | `app/admin/page.tsx` |
+
+### How It Works
+
+1. **Wallet connection** — `useFreighterWallet()` in `useStellar.ts` uses `@stellar/freighter-api` to connect and get the user's public key.
+2. **Read calls** — `stellar.ts` simulates transactions via `server.simulateTransaction()` and returns the result without signing.
+3. **Write calls** — `useStellar.ts` hooks build the transaction, simulate it, assemble the footprint via `rpc.assembleTransaction()`, sign with Freighter (`signTransaction()`), then submit via `server.sendTransaction()`.
+4. **UI** — pages import hooks from `@/src/hooks/useStellar` and render live data; buttons trigger write hooks which invoke the on-chain contract.
+
+---
+
 ## Security
 
 See [SECURITY_CHECKLIST.md](./SECURITY_CHECKLIST.md) for the complete security audit.

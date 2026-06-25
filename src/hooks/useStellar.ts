@@ -1,8 +1,44 @@
 /**
  * React Hooks for Stellar/Freighter Wallet Integration
- * 
+ *
  * Provides hooks for connecting to Freighter wallet and interacting
  * with the TrustCircles Soroban contract on Stellar.
+ *
+ * CONTRACT FUNCTION → HOOK MAPPING (lib.rs → useStellar.ts):
+ * ──────────────────────────────────────────────────────────────────
+ * Contract Function          React Hook
+ * ──────────────────────────────────────────────────────────────────
+ * Circle Management:
+ *   create_circle()        → useCreateCircle()   → calls "create_circle" on-chain
+ *   join_circle()          → useJoinCircle()     → calls "join_circle" on-chain
+ *
+ * Loan Management:
+ *   request_loan()         → useRequestLoan()    → calls "request_loan" on-chain
+ *   approve_loan()         → useApproveLoan()    → calls "approve_loan" on-chain
+ *   repay_loan()           → useRepayLoan()      → calls "repay_loan" on-chain
+ *   penalize_default()     → usePenalizeDefault() → calls "penalize_default" on-chain
+ *
+ * Admin:
+ *   deposit_liquidity()    → useDepositLiquidity() → calls "deposit_liquidity" on-chain
+ *   withdraw()             → useWithdraw()          → calls "withdraw" on-chain
+ *   set_demo_mode()        → useSetDemoMode()        → calls "set_demo_mode" on-chain
+ *   set_demo_loan_duration() → useSetDemoLoanDuration() → calls "set_demo_loan_duration"
+ *   unfreeze_account()     → useUnfreezeAccount()    → calls "unfreeze_account" on-chain
+ *
+ * Data Fetching (read-only, call stellar.ts → simulateContractCall):
+ *   get_user_stats()       → useUserStats()
+ *   get_circle_details()   → useCircleDetails()
+ *   get_loan_details()     → (via useUserLoansData / useAllPendingLoans)
+ *   get_user_loans()       → useUserLoansData()
+ *   get_contract_balance() → useContractBalanceData()
+ *   get_circle_count()     → useAllCircles()
+ *   get_loan_count()       → useAllPendingLoans()
+ *   get_trust_score()      → (included in useUserStats via get_user_stats)
+ *   get_max_loan_amount()  → (included in useUserStats via get_user_stats)
+ *   get_interest_rate()    → (included in useUserStats via get_user_stats)
+ *   is_loan_overdue()      → (used in loan detail views)
+ *   is_demo_mode()         → (read for admin panel state)
+ *   get_admin()            → (used for admin auth check)
  */
 
 "use client";
@@ -699,6 +735,148 @@ export function useApproveLoan() {
   }, []);
 
   return { ...state, approveLoan };
+}
+
+/**
+ * Hook for withdrawing funds (admin only) — calls contract "withdraw"
+ */
+export function useWithdraw() {
+  const [state, setState] = useState<TransactionState>({
+    isPending: false,
+    isSuccess: false,
+    error: null,
+    txHash: null,
+  });
+
+  const withdraw = useCallback(async (publicKey: string, amountXlm: number) => {
+    setState({ isPending: true, isSuccess: false, error: null, txHash: null });
+
+    try {
+      const amountStroops = xlmToStroops(amountXlm);
+
+      const txHash = await submitContractTransaction(
+        publicKey,
+        "withdraw",
+        [nativeToScVal(amountStroops, { type: "i128" })]
+      );
+
+      setState({ isPending: false, isSuccess: true, error: null, txHash });
+    } catch (error) {
+      setState({
+        isPending: false,
+        isSuccess: false,
+        error: error instanceof Error ? error.message : "Transaction failed",
+        txHash: null,
+      });
+    }
+  }, []);
+
+  return { ...state, withdraw };
+}
+
+/**
+ * Hook for penalizing loan defaults (admin only) — calls contract "penalize_default"
+ */
+export function usePenalizeDefault() {
+  const [state, setState] = useState<TransactionState>({
+    isPending: false,
+    isSuccess: false,
+    error: null,
+    txHash: null,
+  });
+
+  const penalizeDefault = useCallback(async (publicKey: string, loanId: number) => {
+    setState({ isPending: true, isSuccess: false, error: null, txHash: null });
+
+    try {
+      const txHash = await submitContractTransaction(
+        publicKey,
+        "penalize_default",
+        [nativeToScVal(loanId, { type: "u32" })]
+      );
+
+      setState({ isPending: false, isSuccess: true, error: null, txHash });
+    } catch (error) {
+      setState({
+        isPending: false,
+        isSuccess: false,
+        error: error instanceof Error ? error.message : "Transaction failed",
+        txHash: null,
+      });
+    }
+  }, []);
+
+  return { ...state, penalizeDefault };
+}
+
+/**
+ * Hook for unfreezing accounts (admin only) — calls contract "unfreeze_account"
+ */
+export function useUnfreezeAccount() {
+  const [state, setState] = useState<TransactionState>({
+    isPending: false,
+    isSuccess: false,
+    error: null,
+    txHash: null,
+  });
+
+  const unfreezeAccount = useCallback(async (publicKey: string, userAddress: string) => {
+    setState({ isPending: true, isSuccess: false, error: null, txHash: null });
+
+    try {
+      const txHash = await submitContractTransaction(
+        publicKey,
+        "unfreeze_account",
+        [new Address(userAddress).toScVal()]
+      );
+
+      setState({ isPending: false, isSuccess: true, error: null, txHash });
+    } catch (error) {
+      setState({
+        isPending: false,
+        isSuccess: false,
+        error: error instanceof Error ? error.message : "Transaction failed",
+        txHash: null,
+      });
+    }
+  }, []);
+
+  return { ...state, unfreezeAccount };
+}
+
+/**
+ * Hook for setting demo loan duration (admin only) — calls contract "set_demo_loan_duration"
+ */
+export function useSetDemoLoanDuration() {
+  const [state, setState] = useState<TransactionState>({
+    isPending: false,
+    isSuccess: false,
+    error: null,
+    txHash: null,
+  });
+
+  const setDemoLoanDuration = useCallback(async (publicKey: string, durationLedgers: number) => {
+    setState({ isPending: true, isSuccess: false, error: null, txHash: null });
+
+    try {
+      const txHash = await submitContractTransaction(
+        publicKey,
+        "set_demo_loan_duration",
+        [nativeToScVal(durationLedgers, { type: "u32" })]
+      );
+
+      setState({ isPending: false, isSuccess: true, error: null, txHash });
+    } catch (error) {
+      setState({
+        isPending: false,
+        isSuccess: false,
+        error: error instanceof Error ? error.message : "Transaction failed",
+        txHash: null,
+      });
+    }
+  }, []);
+
+  return { ...state, setDemoLoanDuration };
 }
 
 /**
