@@ -279,54 +279,156 @@ Zentra/
 
 ## Frontend ↔ Contract Integration
 
-The frontend integrates directly with the deployed TrustCircles Soroban contract via `@stellar/stellar-sdk` and `@stellar/freighter-api`.
+The frontend integrates directly with the deployed TrustCircles Soroban contract (`CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27`) via `@stellar/stellar-sdk` and `@stellar/freighter-api`.
 
 ### Integration Files
 
 | File | Purpose |
 |---|---|
-| `src/lib/stellar.ts` | Low-level contract client — builds, simulates, and submits Soroban transactions |
-| `src/hooks/useStellar.ts` | React hooks wrapping every contract function with wallet signing via Freighter |
-| `app/user/page.tsx` | User dashboard — calls `useCreateCircle`, `useJoinCircle`, `useRequestLoan`, `useRepayLoan` |
-| `app/admin/page.tsx` | Admin panel — calls `useDepositLiquidity`, `useApproveLoan`, `useSetDemoMode`, `useWithdraw`, `usePenalizeDefault`, `useUnfreezeAccount` |
+| `src/lib/stellar.ts` | Low-level contract client — builds `contract.call(fnName, ...args)`, simulates via `server.simulateTransaction()`, and submits signed transactions |
+| `src/hooks/useStellar.ts` | React hooks wrapping every `lib.rs` function with Freighter wallet signing |
+| `app/user/page.tsx` | Imports and calls `useCreateCircle`, `useJoinCircle`, `useRequestLoan`, `useRepayLoan` |
+| `app/admin/page.tsx` | Imports and calls `useDepositLiquidity`, `useApproveLoan`, `useWithdraw`, `usePenalizeDefault`, `useUnfreezeAccount`, `useSetDemoMode`, `useSetDemoLoanDuration` |
 
-### Contract Function → Frontend Mapping
+### How the Contract Is Called (src/lib/stellar.ts)
 
-Every public function in `contracts/trust_circles/src/lib.rs` has a corresponding frontend call:
+Every write and read operation goes through `@stellar/stellar-sdk`'s `Contract.call()`:
 
-| `lib.rs` Function | `stellar.ts` Helper | `useStellar.ts` Hook | UI Page |
+```typescript
+import { Contract, TransactionBuilder, BASE_FEE, Networks,
+         rpc, nativeToScVal, Address } from "@stellar/stellar-sdk";
+
+const CONTRACT_ID = "CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27";
+const contract = new Contract(CONTRACT_ID);
+const server   = new rpc.Server("https://soroban-testnet.stellar.org");
+
+// Read — simulate only (no signature required)
+const tx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: Networks.TESTNET })
+  .addOperation(contract.call("get_user_stats", new Address(userAddress).toScVal()))
+  .setTimeout(30).build();
+const simulation = await server.simulateTransaction(tx);
+const result = scValToNative(simulation.result.retval);
+
+// Write — simulate → assemble footprint → sign with Freighter → submit
+const writeTx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: Networks.TESTNET })
+  .addOperation(contract.call("create_circle",
+      new Address(publicKey).toScVal(),
+      nativeToScVal(name, { type: "string" })))
+  .setTimeout(300).build();
+const sim      = await server.simulateTransaction(writeTx);
+const prepared = rpc.assembleTransaction(writeTx, sim).build();
+const signedXdr = await signTransaction(prepared.toXDR(), { networkPassphrase: Networks.TESTNET });
+const submitted = await server.sendTransaction(TransactionBuilder.fromXDR(signedXdr, Networks.TESTNET));
+```
+
+### React Hooks (src/hooks/useStellar.ts) — each calls the matching lib.rs function
+
+```typescript
+// useCreateCircle → contract "create_circle"
+export function useCreateCircle() {
+  const createCircle = useCallback(async (publicKey: string, name: string) => {
+    await submitContractTransaction(publicKey, "create_circle", [
+      new Address(publicKey).toScVal(),
+      nativeToScVal(name, { type: "string" }),
+    ]);
+  }, []);
+  return { createCircle, isPending, isSuccess, error, txHash };
+}
+
+// useRequestLoan → contract "request_loan"
+export function useRequestLoan() {
+  const requestLoan = useCallback(async (publicKey: string, amountXlm: number, purpose: string) => {
+    await submitContractTransaction(publicKey, "request_loan", [
+      new Address(publicKey).toScVal(),
+      nativeToScVal(xlmToStroops(amountXlm), { type: "i128" }),
+      nativeToScVal(purpose, { type: "string" }),
+    ]);
+  }, []);
+  return { requestLoan, isPending, isSuccess, error, txHash };
+}
+
+// useWithdraw → contract "withdraw"
+export function useWithdraw() {
+  const withdraw = useCallback(async (publicKey: string, amountXlm: number) => {
+    await submitContractTransaction(publicKey, "withdraw", [
+      nativeToScVal(xlmToStroops(amountXlm), { type: "i128" }),
+    ]);
+  }, []);
+  return { withdraw, isPending, isSuccess, error, txHash };
+}
+
+// usePenalizeDefault → contract "penalize_default"
+export function usePenalizeDefault() {
+  const penalizeDefault = useCallback(async (publicKey: string, loanId: number) => {
+    await submitContractTransaction(publicKey, "penalize_default", [
+      nativeToScVal(loanId, { type: "u32" }),
+    ]);
+  }, []);
+  return { penalizeDefault, isPending, isSuccess, error, txHash };
+}
+
+// useUnfreezeAccount → contract "unfreeze_account"
+export function useUnfreezeAccount() {
+  const unfreezeAccount = useCallback(async (publicKey: string, userAddress: string) => {
+    await submitContractTransaction(publicKey, "unfreeze_account", [
+      new Address(userAddress).toScVal(),
+    ]);
+  }, []);
+  return { unfreezeAccount, isPending, isSuccess, error, txHash };
+}
+```
+
+### UI Pages Import and Invoke These Hooks Directly
+
+```typescript
+// app/user/page.tsx
+import { useCreateCircle, useJoinCircle, useRequestLoan, useRepayLoan } from '@/src/hooks/useStellar';
+const { createCircle } = useCreateCircle();   // triggers lib.rs create_circle()
+const { joinCircle }   = useJoinCircle();     // triggers lib.rs join_circle()
+const { requestLoan }  = useRequestLoan();    // triggers lib.rs request_loan()
+const { repayLoan }    = useRepayLoan();      // triggers lib.rs repay_loan()
+
+// app/admin/page.tsx
+import { useDepositLiquidity, useApproveLoan, useWithdraw,
+         usePenalizeDefault, useUnfreezeAccount,
+         useSetDemoMode, useSetDemoLoanDuration } from '@/src/hooks/useStellar';
+const { depositLiquidity }    = useDepositLiquidity();    // triggers lib.rs deposit_liquidity()
+const { approveLoan }         = useApproveLoan();         // triggers lib.rs approve_loan()
+const { withdraw }            = useWithdraw();            // triggers lib.rs withdraw()
+const { penalizeDefault }     = usePenalizeDefault();     // triggers lib.rs penalize_default()
+const { unfreezeAccount }     = useUnfreezeAccount();     // triggers lib.rs unfreeze_account()
+const { setDemoMode }         = useSetDemoMode();         // triggers lib.rs set_demo_mode()
+const { setDemoLoanDuration } = useSetDemoLoanDuration(); // triggers lib.rs set_demo_loan_duration()
+```
+
+### Complete Function Mapping (lib.rs → stellar.ts → useStellar.ts → UI)
+
+| `lib.rs` Function | `stellar.ts` (contract.call) | `useStellar.ts` Hook | UI Page |
 |---|---|---|---|
-| `create_circle(creator, name)` | args built inline | `useCreateCircle()` | `app/user/page.tsx` |
-| `join_circle(member, circle_id)` | args built inline | `useJoinCircle()` | `app/user/page.tsx` |
-| `request_loan(borrower, amount, purpose)` | args built inline | `useRequestLoan()` | `app/user/page.tsx` |
-| `repay_loan(borrower, loan_id)` | args built inline | `useRepayLoan()` | `app/user/page.tsx` |
-| `approve_loan(loan_id)` | args built inline | `useApproveLoan()` | `app/admin/page.tsx` |
-| `deposit_liquidity(amount)` | args built inline | `useDepositLiquidity()` | `app/admin/page.tsx` |
-| `withdraw(amount)` | `withdrawCall()` | `useWithdraw()` | `app/admin/page.tsx` |
-| `set_demo_mode(enabled)` | args built inline | `useSetDemoMode()` | `app/admin/page.tsx` |
-| `set_demo_loan_duration(duration)` | `setDemoLoanDurationCall()` | `useSetDemoLoanDuration()` | Admin panel |
-| `penalize_default(loan_id)` | `penalizeDefaultCall()` | `usePenalizeDefault()` | Admin panel |
-| `unfreeze_account(user)` | `unfreezeAccountCall()` | `useUnfreezeAccount()` | Admin panel |
-| `get_user_stats(user)` | `getUserStats()` | `useUserStats()` | `app/user/page.tsx` |
-| `get_circle_details(id)` | `getCircleDetails()` | `useCircleDetails()` | `app/user/page.tsx` |
-| `get_loan_details(id)` | `getLoanDetails()` | `useUserLoansData()` | `app/user/page.tsx` |
-| `get_user_loans(user)` | `getUserLoans()` | `useUserLoansData()` | `app/user/page.tsx` |
-| `get_trust_score(user)` | `getTrustScore()` | (via `useUserStats`) | `app/user/page.tsx` |
-| `get_max_loan_amount(user)` | `getMaxLoanAmount()` | (via `useUserStats`) | `app/user/page.tsx` |
-| `get_interest_rate(user)` | `getInterestRate()` | (via `useUserStats`) | `app/user/page.tsx` |
-| `get_contract_balance()` | `getContractBalance()` | `useContractBalanceData()` | `app/admin/page.tsx` |
-| `get_circle_count()` | `getCircleCount()` | `useAllCircles()` | Both pages |
-| `get_loan_count()` | `getLoanCount()` | `useAllPendingLoans()` | `app/admin/page.tsx` |
-| `is_loan_overdue(id)` | `isLoanOverdue()` | (used in loan views) | `app/user/page.tsx` |
-| `is_demo_mode()` | `isDemoMode()` | (admin state read) | `app/admin/page.tsx` |
-| `get_admin()` | `getAdmin()` | (auth check) | `app/admin/page.tsx` |
-
-### How It Works
-
-1. **Wallet connection** — `useFreighterWallet()` in `useStellar.ts` uses `@stellar/freighter-api` to connect and get the user's public key.
-2. **Read calls** — `stellar.ts` simulates transactions via `server.simulateTransaction()` and returns the result without signing.
-3. **Write calls** — `useStellar.ts` hooks build the transaction, simulate it, assemble the footprint via `rpc.assembleTransaction()`, sign with Freighter (`signTransaction()`), then submit via `server.sendTransaction()`.
-4. **UI** — pages import hooks from `@/src/hooks/useStellar` and render live data; buttons trigger write hooks which invoke the on-chain contract.
+| `create_circle(creator, name)` | `"create_circle"` | `useCreateCircle()` | `app/user/page.tsx` |
+| `join_circle(member, circle_id)` | `"join_circle"` | `useJoinCircle()` | `app/user/page.tsx` |
+| `request_loan(borrower, amount, purpose)` | `"request_loan"` | `useRequestLoan()` | `app/user/page.tsx` |
+| `repay_loan(borrower, loan_id)` | `"repay_loan"` | `useRepayLoan()` | `app/user/page.tsx` |
+| `approve_loan(loan_id)` | `"approve_loan"` | `useApproveLoan()` | `app/admin/page.tsx` |
+| `deposit_liquidity(amount)` | `"deposit_liquidity"` | `useDepositLiquidity()` | `app/admin/page.tsx` |
+| `withdraw(amount)` | `"withdraw"` | `useWithdraw()` | `app/admin/page.tsx` |
+| `penalize_default(loan_id)` | `"penalize_default"` | `usePenalizeDefault()` | `app/admin/page.tsx` |
+| `unfreeze_account(user)` | `"unfreeze_account"` | `useUnfreezeAccount()` | `app/admin/page.tsx` |
+| `set_demo_mode(enabled)` | `"set_demo_mode"` | `useSetDemoMode()` | `app/admin/page.tsx` |
+| `set_demo_loan_duration(ledgers)` | `"set_demo_loan_duration"` | `useSetDemoLoanDuration()` | `app/admin/page.tsx` |
+| `get_user_stats(user)` | `"get_user_stats"` | `useUserStats()` | `app/user/page.tsx` |
+| `get_circle_details(id)` | `"get_circle_details"` | `useCircleDetails()` | `app/user/page.tsx` |
+| `get_loan_details(id)` | `"get_loan_details"` | `useUserLoansData()` | `app/user/page.tsx` |
+| `get_user_loans(user)` | `"get_user_loans"` | `useUserLoansData()` | `app/user/page.tsx` |
+| `get_trust_score(user)` | `"get_trust_score"` | via `useUserStats()` | `app/user/page.tsx` |
+| `get_max_loan_amount(user)` | `"get_max_loan_amount"` | via `useUserStats()` | `app/user/page.tsx` |
+| `get_interest_rate(user)` | `"get_interest_rate"` | via `useUserStats()` | `app/user/page.tsx` |
+| `get_contract_balance()` | `"get_contract_balance"` | `useContractBalanceData()` | `app/admin/page.tsx` |
+| `get_circle_count()` | `"get_circle_count"` | `useAllCircles()` | Both pages |
+| `get_loan_count()` | `"get_loan_count"` | `useAllPendingLoans()` | `app/admin/page.tsx` |
+| `is_loan_overdue(id)` | `"is_loan_overdue"` | loan detail views | `app/user/page.tsx` |
+| `is_demo_mode()` | `"is_demo_mode"` | admin state read | `app/admin/page.tsx` |
+| `get_admin()` | `"get_admin"` | auth check | `app/admin/page.tsx` |
 
 ---
 

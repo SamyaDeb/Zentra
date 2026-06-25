@@ -10,6 +10,10 @@ import {
   useDepositLiquidity,
   useApproveLoan,
   useSetDemoMode,
+  useWithdraw,
+  usePenalizeDefault,
+  useUnfreezeAccount,
+  useSetDemoLoanDuration,
 } from '@/src/hooks/useStellar';
 import { formatXlm, stroopsToXlm, CONTRACT_CONFIG } from '@/config/stellarConfig';
 import type { Loan } from '@/src/lib/stellar';
@@ -140,22 +144,37 @@ export default function AdminPage() {
 
           {/* Liquidity & Demo Mode */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <DepositLiquidityForm 
-              publicKey={publicKey!} 
-              onSuccess={() => refetchBalance()} 
+            <DepositLiquidityForm
+              publicKey={publicKey!}
+              onSuccess={() => refetchBalance()}
             />
             <DemoModeToggle publicKey={publicKey!} />
           </div>
 
+          {/* Withdraw & Penalize Default */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <WithdrawForm
+              publicKey={publicKey!}
+              onSuccess={() => refetchBalance()}
+            />
+            <PenalizeDefaultForm publicKey={publicKey!} />
+          </div>
+
+          {/* Unfreeze Account & Demo Loan Duration */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <UnfreezeAccountForm publicKey={publicKey!} />
+            <SetDemoLoanDurationForm publicKey={publicKey!} />
+          </div>
+
           {/* Pending Loan Approvals */}
           <div className="mb-6">
-            <PendingApprovals 
+            <PendingApprovals
               loans={pendingLoans}
               publicKey={publicKey!}
               onSuccess={() => {
                 refetchLoans();
                 refetchBalance();
-              }} 
+              }}
             />
           </div>
 
@@ -352,6 +371,153 @@ function PendingApprovals({ loans, publicKey, onSuccess }: {
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+// Withdraw Form — calls contract "withdraw"
+function WithdrawForm({ publicKey, onSuccess }: { publicKey: string; onSuccess: () => void }) {
+  const [amount, setAmount] = useState('');
+  const { withdraw, isPending, isSuccess, error } = useWithdraw();
+
+  useEffect(() => {
+    if (isSuccess) { setAmount(''); onSuccess(); alert('Withdrawal successful!'); }
+  }, [isSuccess, onSuccess]);
+
+  useEffect(() => { if (error) alert(error); }, [error]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!amount || parseFloat(amount) <= 0) { alert('Enter a valid amount'); return; }
+    withdraw(publicKey, parseFloat(amount));
+  };
+
+  return (
+    <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20">
+      <h3 className="text-xl font-bold text-white mb-4">Withdraw Funds</h3>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="text-sm text-white/60 mb-2 block">Amount (XLM)</label>
+          <input type="number" step="1" min="1" value={amount}
+            onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount in XLM"
+            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40" />
+        </div>
+        <button type="submit" disabled={isPending}
+          className="w-full bg-orange-500/90 hover:bg-orange-500 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50">
+          {isPending ? 'Withdrawing...' : 'Withdraw'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// Penalize Default Form — calls contract "penalize_default"
+function PenalizeDefaultForm({ publicKey }: { publicKey: string }) {
+  const [loanId, setLoanId] = useState('');
+  const { penalizeDefault, isPending, isSuccess, error } = usePenalizeDefault();
+
+  useEffect(() => {
+    if (isSuccess) { setLoanId(''); alert('Default penalty applied!'); }
+  }, [isSuccess]);
+
+  useEffect(() => { if (error) alert(error); }, [error]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loanId || parseInt(loanId) <= 0) { alert('Enter a valid loan ID'); return; }
+    penalizeDefault(publicKey, parseInt(loanId));
+  };
+
+  return (
+    <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20">
+      <h3 className="text-xl font-bold text-white mb-4">Penalize Default</h3>
+      <p className="text-white/60 text-sm mb-4">Reduce trust score for an overdue loan borrower.</p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="text-sm text-white/60 mb-2 block">Loan ID</label>
+          <input type="number" min="1" value={loanId}
+            onChange={(e) => setLoanId(e.target.value)} placeholder="Enter loan ID"
+            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40" />
+        </div>
+        <button type="submit" disabled={isPending}
+          className="w-full bg-red-500/90 hover:bg-red-500 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50">
+          {isPending ? 'Applying...' : 'Penalize Default'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// Unfreeze Account Form — calls contract "unfreeze_account"
+function UnfreezeAccountForm({ publicKey }: { publicKey: string }) {
+  const [userAddress, setUserAddress] = useState('');
+  const { unfreezeAccount, isPending, isSuccess, error } = useUnfreezeAccount();
+
+  useEffect(() => {
+    if (isSuccess) { setUserAddress(''); alert('Account unfrozen!'); }
+  }, [isSuccess]);
+
+  useEffect(() => { if (error) alert(error); }, [error]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userAddress.trim()) { alert('Enter a valid Stellar address'); return; }
+    unfreezeAccount(publicKey, userAddress.trim());
+  };
+
+  return (
+    <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20">
+      <h3 className="text-xl font-bold text-white mb-4">Unfreeze Account</h3>
+      <p className="text-white/60 text-sm mb-4">Re-enable a previously penalized account.</p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="text-sm text-white/60 mb-2 block">User Address</label>
+          <input type="text" value={userAddress}
+            onChange={(e) => setUserAddress(e.target.value)} placeholder="G..."
+            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 font-mono text-sm" />
+        </div>
+        <button type="submit" disabled={isPending}
+          className="w-full bg-blue-500/90 hover:bg-blue-500 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50">
+          {isPending ? 'Unfreezing...' : 'Unfreeze Account'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// Set Demo Loan Duration Form — calls contract "set_demo_loan_duration"
+function SetDemoLoanDurationForm({ publicKey }: { publicKey: string }) {
+  const [duration, setDuration] = useState('');
+  const { setDemoLoanDuration, isPending, isSuccess, error } = useSetDemoLoanDuration();
+
+  useEffect(() => {
+    if (isSuccess) { setDuration(''); alert('Demo loan duration updated!'); }
+  }, [isSuccess]);
+
+  useEffect(() => { if (error) alert(error); }, [error]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!duration || parseInt(duration) <= 0) { alert('Enter a valid ledger count'); return; }
+    setDemoLoanDuration(publicKey, parseInt(duration));
+  };
+
+  return (
+    <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20">
+      <h3 className="text-xl font-bold text-white mb-4">Demo Loan Duration</h3>
+      <p className="text-white/60 text-sm mb-4">Set loan duration in ledgers for demo mode (~5 sec/ledger).</p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="text-sm text-white/60 mb-2 block">Duration (ledgers)</label>
+          <input type="number" min="1" value={duration}
+            onChange={(e) => setDuration(e.target.value)} placeholder="e.g. 120 (~10 min)"
+            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40" />
+        </div>
+        <button type="submit" disabled={isPending}
+          className="w-full bg-purple-500/90 hover:bg-purple-500 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50">
+          {isPending ? 'Updating...' : 'Set Duration'}
+        </button>
+      </form>
     </div>
   );
 }
