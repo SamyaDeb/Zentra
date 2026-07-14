@@ -92,6 +92,7 @@ export function useTrustScore(address: string) {
 | `get_active_loans(user)` | Get user's loans | ~800ms |
 | `get_max_loan_amount(user)` | Get borrowing limit | ~500ms |
 | `get_interest_rate(user)` | Get interest rate | ~500ms |
+| `getLatestLedgerSequence()` (RPC, not a contract call) | Polled every 30s to compute loans' time-to-due-date for the dashboard reminder banner (v1.1) | ~200ms |
 
 ### Horizon API Endpoints
 
