@@ -45,7 +45,7 @@
 | Check | Status | Notes |
 |-------|--------|-------|
 | Trust score bounds (0-100) | ✅ Pass | Score capped at min 0, max 100 |
-| Loan duration enforced | ✅ Pass | Fixed 7-day duration |
+| Loan duration enforced | ✅ Pass | Borrower-selected 7/30/60/90-day tiers, validated on-chain (see v1.1 addendum) |
 | Interest calculation correct | ✅ Pass | Verified against tier table |
 | Default penalty applied correctly | ✅ Pass | -50 borrower, -20 circle members |
 | Circle size limits enforced | ✅ Pass | Min 3, Max 10 members |
@@ -152,8 +152,8 @@
 ### Current Version
 
 1. **Single Admin:** Currently only one admin address can manage the platform
-2. **Fixed Loan Duration:** All loans are 7 days (no flexibility)
-3. **No Circle Exit:** Users cannot leave circles once joined
+2. ~~Fixed Loan Duration~~ — resolved in v1.1 audit, see below
+3. ~~No Circle Exit~~ — resolved in v1.1 audit, see below
 4. **Manual Default Handling:** Admin must manually penalize defaults
 5. **Testnet Only:** Not audited for mainnet deployment
 
@@ -161,9 +161,63 @@
 
 1. Implement multi-sig admin
 2. Add automated default detection
-3. Enable circle exit with cooldown
-4. Add flexible loan durations
+3. ~~Enable circle exit with cooldown~~ — implemented (no cooldown; blocked only while a loan is active, see below)
+4. ~~Add flexible loan durations~~ — implemented, see below
 5. Professional security audit before mainnet
+
+---
+
+## v1.1 Audit Addendum — Contract Upgrade (Flexible Durations + Circle Exit)
+
+**Date:** 2026-07-14
+**Auditor:** SamyaDeb (Self-Audit)
+**Scope:** `request_loan` duration parameter, `approve_loan` due-date calculation, new `leave_circle` function.
+
+### Finding 1 (High, Fixed): Loan duration was silently 7x shorter than documented
+
+`LOAN_DURATION_LEDGERS` was set to `17280`. At 5 seconds/ledger that is exactly
+1 day (`17280 × 5s = 86400s`), not the "7 days" claimed in the README and in
+`config/stellarConfig.ts` (which independently defined `LEDGERS_PER_DAY: 17280`
+and `DEFAULT_LOAN_DURATION: 120960` — i.e. the frontend's own constant already
+assumed 7× the contract's actual value). Every non-demo loan matured about 7x
+faster than borrowers were told, which both misleads users and skews the
+"on-time vs. late" credit-scoring bonuses in `calculate_credit_bonus`.
+
+**Fix:** replaced the fixed constant with `duration_days * LEDGERS_PER_DAY`,
+where `duration_days` is the borrower's explicit choice at request time
+(7/30/60/90, validated against `ALLOWED_LOAN_DURATIONS_DAYS`). Demo mode is
+unaffected — it still uses the admin-configured fast ledger count so demos
+don't require waiting real days. Covered by
+`test_request_loan_flexible_duration_sets_due_ledger`.
+
+### Finding 2 (Medium, Fixed): `leave_circle` updated storage after the external token transfer
+
+The initial draft of `leave_circle` called `token.transfer()` (refunding the
+member's stake) before writing the member's cleared `circle_id`/`trust_bond`
+back to storage. Per Soroban's execution model the native XLM Stellar Asset
+Contract cannot call back into the invoking contract, so this was not
+exploitable today — but it violates checks-effects-interactions and would
+become a double-refund vector if the token contract were ever swapped for one
+with callback behavior. **Fix:** all storage writes (circle membership,
+member record) now happen before the token transfer. No test can directly
+prove the absence of reentrancy in a mocked-auth unit test environment; this
+was caught and fixed by code review, not by a failing test.
+
+### Finding 3 (Low, Accepted): `leave_circle` has no exit cooldown or notice period
+
+A member can join a circle and leave immediately, refunding their stake with
+no penalty, as long as they have no active loan. This is intentional — the
+stake is meant to secure loan behavior, not membership duration — but it does
+mean a circle's member count (and therefore its `is_active` status) can
+fluctuate. Accepted as-is; flagged for future consideration of a minimum
+membership period if circle churn becomes a problem in practice.
+
+### Regression Coverage
+
+All 26 contract unit tests pass after the upgrade (20 pre-existing + 6 new):
+`cargo test` in `contracts/`. New tests: `test_leave_circle_refunds_stake_and_deactivates`,
+`test_leave_circle_with_active_loan_fails`, `test_leave_circle_not_in_circle_fails`,
+`test_request_loan_invalid_duration`, `test_request_loan_flexible_duration_sets_due_ledger`.
 
 ---
 

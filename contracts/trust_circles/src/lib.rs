@@ -349,17 +349,19 @@ impl TrustCirclesContract {
 
         storage::set_circle(&env, circle_id, &circle);
 
+        // Clear circle membership (preserving score/loan history) before the
+        // external token transfer below, so a second leave_circle call from
+        // the same member can't read stale state and double-refund.
+        member_data.circle_id = 0;
+        member_data.trust_bond = 0;
+        storage::set_member(&env, &member, &member_data);
+
         // Refund the member's stake from the contract's token balance
         if refund > 0 {
             let token_id = storage::get_token_id(&env)?;
             let token = TokenClient::new(&env, &token_id);
             token.transfer(&env.current_contract_address(), &member, &refund);
         }
-
-        // Clear circle membership but preserve score/loan history
-        member_data.circle_id = 0;
-        member_data.trust_bond = 0;
-        storage::set_member(&env, &member, &member_data);
 
         env.events().publish(
             (symbol_short!("circle"), symbol_short!("left")),
