@@ -119,13 +119,13 @@ Functions:
 ├── join_circle()          // Join existing circle
 ├── get_circle_details()   // Fetch circle info
 ├── get_circle_avg_score() // Calculate circle trust score
-└── leave_circle()         // Exit circle (future)
+└── leave_circle()         // Exit circle + refund stake (implemented v1.1)
 ```
 
 #### Loan Management Module
 ```rust
 Functions:
-├── request_loan()         // Submit loan request
+├── request_loan()         // Submit loan request (7/30/60/90-day duration, v1.1)
 ├── approve_loan()         // Admin approval + disburse
 ├── repay_loan()          // Repay loan + update score
 ├── get_active_loans()    // Fetch user loans
@@ -292,14 +292,16 @@ Production:
 
 **Current Limitations:**
 - Single admin address (centralized approval)
-- Fixed loan duration (7 days)
 - Manual liquidity deposits
 - No automated interest calculation
+
+**Resolved in v1.1:**
+- ~~Fixed loan duration (7 days)~~ — borrower now picks 7/30/60/90 days
+- ~~No circle exit~~ — `leave_circle()` refunds stake and removes membership
 
 **Future Improvements:**
 - Multi-sig admin approval
 - Automated market maker (AMM) for liquidity
-- Dynamic loan durations
 - Oracle integration for price feeds
 - Layer 2 scaling solutions
 

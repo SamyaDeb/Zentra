@@ -87,10 +87,10 @@
 
 ### Constructive Criticism
 
-1. **"Loan duration too short"** - User #3
+1. **"Loan duration too short"** - User #3 — ✅ **Resolved in v1.1**: `request_loan` now accepts a 7/30/60/90-day tier.
    > "7 days is not enough for my business needs. Please add 30/60 day options."
 
-2. **"Can't leave circle"** - User #8
+2. **"Can't leave circle"** - User #8 — ✅ **Resolved in v1.1**: `leave_circle` refunds stake and removes membership.
    > "I joined the wrong circle and now I'm stuck. Need a way to exit."
 
 3. **"Mobile experience needs work"** - User #14
@@ -181,10 +181,10 @@
 
 ### Short-Term (v1.1)
 
-- [ ] Implement flexible loan durations
-- [ ] Add circle exit functionality
-- [ ] Create mobile-responsive improvements
-- [ ] Add automated loan reminders
+- [x] Implement flexible loan durations (7/30/60/90 days, on-chain in `request_loan`)
+- [x] Add circle exit functionality (`leave_circle`, refunds stake)
+- [x] Create mobile-responsive improvements (navbar connect-button overlap fixed)
+- [x] Add automated loan reminders (due-date banner on the user dashboard)
 
 ### Long-Term (v2.0)
 

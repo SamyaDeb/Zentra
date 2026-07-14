@@ -117,6 +117,34 @@ const success = await contractClient.join_circle({
 
 ---
 
+#### `leave_circle` (v1.1+)
+
+Leave the caller's current trust circle and reclaim their staked XLM.
+
+**Parameters:**
+```rust
+member: Address      // Leaving member's wallet
+```
+
+**Returns:** `Result<(), Error>`
+
+**Constraints:**
+- Caller must currently be in a circle (else `NotInCircle`)
+- Caller must have no active loan (else `CannotLeaveWithActiveLoan`)
+
+**Effects:**
+- Removes the member from the circle's member list
+- Refunds their staked XLM (`trust_bond`) from the contract balance
+- Deactivates the circle if membership drops below 3
+- Resets the member's `circle_id`/`trust_bond` to 0, preserving their score and loan history
+
+**Example:**
+```typescript
+await contractClient.leave_circle({ member: userAddress });
+```
+
+---
+
 #### `get_circle_details`
 
 Fetch circle information.
@@ -179,9 +207,10 @@ Submit a loan request.
 
 **Parameters:**
 ```rust
-borrower: Address    // Borrower's wallet
-amount: i128        // Loan amount in stroops (1 XLM = 10^7 stroops)
-purpose: String     // Loan purpose (max 128 chars)
+borrower: Address       // Borrower's wallet
+amount: i128           // Loan amount in stroops (1 XLM = 10^7 stroops)
+purpose: String        // Loan purpose (max 128 chars)
+duration_days: u32     // Repayment tier: 7, 30, 60, or 90 (v1.1+)
 ```
 
 **Returns:** `u32` - Loan ID
@@ -191,13 +220,15 @@ purpose: String     // Loan purpose (max 128 chars)
 - No existing active loan
 - Amount <= max loan for trust score
 - Account not frozen
+- `duration_days` must be one of 7/30/60/90, or the call fails with `InvalidLoanDuration`
 
 **Example:**
 ```typescript
 const loanId = await contractClient.request_loan({
   borrower: userAddress,
   amount: BigInt(300 * 10_000_000), // 300 XLM
-  purpose: 'Inventory purchase'
+  purpose: 'Inventory purchase',
+  duration_days: 30,
 });
 ```
 
@@ -207,12 +238,17 @@ Loan {
   id: u32,
   borrower: Address,
   amount: i128,
-  interest: i128,
+  interest_amount: i128,
   total_repayment: i128,
-  due_date: u64,
-  status: LoanStatus,
+  request_ledger: u32,
+  approval_ledger: u32,
+  due_ledger: u32,
+  repayment_ledger: u32,
+  approved: bool,
+  disbursed: bool,
+  repaid: bool,
   purpose: String,
-  created_at: u64
+  duration_days: u32
 }
 ```
 
@@ -230,7 +266,9 @@ loan_id: u32        // Loan ID to approve
 **Returns:** `bool` - Success status
 
 **Effects:**
-- Sets due_date = current_time + 7 days
+- Sets due_ledger = current_ledger + (duration_days × 17,280 ledgers/day),
+  using the duration the borrower chose in `request_loan` (demo mode instead
+  uses the admin-configured fast ledger count)
 - Transfers XLM from contract to borrower
 - Updates loan status to Active
 

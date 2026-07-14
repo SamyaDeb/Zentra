@@ -36,6 +36,23 @@
 
 ---
 
+## Level 5 Upgrade (v1.1) — Product & Technical Improvements
+
+Following the feedback round in [FEEDBACK.md](./FEEDBACK.md), this upgrade closes out the top two requested features, a real contract bug, and Level 5's product/technical bar:
+
+| Requirement | What changed |
+|---|---|
+| **Product improvement from feedback** | `leave_circle` (14 requests) and flexible 7/30/60/90-day loan durations (18 requests) — the two most-requested features — are now implemented on-chain, not just tracked in FEEDBACK.md |
+| **UX/UI & stability** | Fixed mobile navbar overlap around the wallet connect button (BUG-003); fixed a contract bug where loans matured in ~1 day instead of the documented 7 (see [SECURITY_CHECKLIST.md](./SECURITY_CHECKLIST.md#v11-audit-addendum--contract-upgrade-flexible-durations--circle-exit)) |
+| **Onboarding optimization** | New dismissible 4-step "Getting Started" guide on the user dashboard (connect → join/create circle → request loan → repay on time) |
+| **Contract audit / upgrade** | New `leave_circle` function and `request_loan` duration parameter, both unit-tested (26/26 tests passing); self-audit documented in SECURITY_CHECKLIST.md, including a reentrancy-ordering fix |
+| **Technical standard: 20+ commits** | This upgrade alone shipped as a series of scoped commits (contract, frontend wiring, UI, mobile fix, onboarding, audit, docs) — see `git log` |
+| **Updated documentation** | README, SECURITY_CHECKLIST.md, and FEEDBACK.md all updated to reflect the new functions and resolved action items |
+
+> **Note on "real transaction activity":** the contract functions above are covered by 26 passing unit tests (`cargo test` in `contracts/`), but the *deployed* testnet contract at the address above still runs the pre-upgrade WASM. Generating real on-chain transaction history against `leave_circle`/flexible-duration `request_loan` requires redeploying the upgraded contract with a funded testnet key (`stellar contract deploy`, see `deploy.sh`) and exercising it from the live frontend — that step needs a signer this environment doesn't have, so it's left for the project owner to run.
+
+---
+
 ## Screenshots
 
 ### Mobile Responsive View
@@ -90,7 +107,9 @@ Zentra introduces a **decentralized Trust Score system** that enables under-coll
 ### Key Features
 
 - **Trust Circles** - Community-based lending groups where members vouch for each other (3-10 members)
+- **Circle Exit** - Leave a circle any time (with no active loan) and reclaim your staked XLM
 - **Under-Collateralized Loans** - Borrow without 100% collateral based on trust score
+- **Flexible Loan Durations** - Choose a 7/30/60/90-day repayment period per loan
 - **Dynamic Credit Limits** - Borrowing capacity increases with positive repayment behavior
 - **Collective Accountability** - If one member defaults, entire circle loses 20 points each
 - **Cross-Border Flows** - SEP-24/SEP-31 anchor integration for fiat on/off ramps
@@ -108,6 +127,18 @@ Zentra introduces a **decentralized Trust Score system** that enables under-coll
 | 70-79 | 500 XLM | 4% |
 | 80-89 | 1000 XLM | 2% |
 | 90-100 | 2000 XLM | 2% |
+
+### Repayment Durations
+
+Borrowers pick a repayment tier when requesting a loan; the contract validates
+the choice on-chain (`request_loan(..., duration_days)`):
+
+| Duration | Ledgers (mainnet timing) |
+|----------|--------------------------|
+| 7 days | 120,960 |
+| 30 days | 518,400 |
+| 60 days | 1,036,800 |
+| 90 days | 1,555,200 |
 
 ---
 
@@ -287,7 +318,7 @@ The frontend integrates directly with the deployed TrustCircles Soroban contract
 |---|---|
 | `src/lib/stellar.ts` | Low-level contract client — builds `contract.call(fnName, ...args)`, simulates via `server.simulateTransaction()`, and submits signed transactions |
 | `src/hooks/useStellar.ts` | React hooks wrapping every `lib.rs` function with Freighter wallet signing |
-| `app/user/page.tsx` | Imports and calls `useCreateCircle`, `useJoinCircle`, `useRequestLoan`, `useRepayLoan` |
+| `app/user/page.tsx` | Imports and calls `useCreateCircle`, `useJoinCircle`, `useLeaveCircle`, `useRequestLoan`, `useRepayLoan` |
 | `app/admin/page.tsx` | Imports and calls `useDepositLiquidity`, `useApproveLoan`, `useWithdraw`, `usePenalizeDefault`, `useUnfreezeAccount`, `useSetDemoMode`, `useSetDemoLoanDuration` |
 
 ### How the Contract Is Called (src/lib/stellar.ts)
@@ -335,13 +366,24 @@ export function useCreateCircle() {
   return { createCircle, isPending, isSuccess, error, txHash };
 }
 
-// useRequestLoan → contract "request_loan"
+// useLeaveCircle → contract "leave_circle"
+export function useLeaveCircle() {
+  const leaveCircle = useCallback(async (publicKey: string) => {
+    await submitContractTransaction(publicKey, "leave_circle", [
+      new Address(publicKey).toScVal(),
+    ]);
+  }, []);
+  return { leaveCircle, isPending, isSuccess, error, txHash };
+}
+
+// useRequestLoan → contract "request_loan" (duration_days: 7 | 30 | 60 | 90)
 export function useRequestLoan() {
-  const requestLoan = useCallback(async (publicKey: string, amountXlm: number, purpose: string) => {
+  const requestLoan = useCallback(async (publicKey: string, amountXlm: number, purpose: string, durationDays: number) => {
     await submitContractTransaction(publicKey, "request_loan", [
       new Address(publicKey).toScVal(),
       nativeToScVal(xlmToStroops(amountXlm), { type: "i128" }),
       nativeToScVal(purpose, { type: "string" }),
+      nativeToScVal(durationDays, { type: "u32" }),
     ]);
   }, []);
   return { requestLoan, isPending, isSuccess, error, txHash };
@@ -407,7 +449,8 @@ const { setDemoLoanDuration } = useSetDemoLoanDuration(); // triggers lib.rs set
 |---|---|---|---|
 | `create_circle(creator, name)` | `"create_circle"` | `useCreateCircle()` | `app/user/page.tsx` |
 | `join_circle(member, circle_id)` | `"join_circle"` | `useJoinCircle()` | `app/user/page.tsx` |
-| `request_loan(borrower, amount, purpose)` | `"request_loan"` | `useRequestLoan()` | `app/user/page.tsx` |
+| `leave_circle(member)` | `"leave_circle"` | `useLeaveCircle()` | `app/user/page.tsx` |
+| `request_loan(borrower, amount, purpose, duration_days)` | `"request_loan"` | `useRequestLoan()` | `app/user/page.tsx` |
 | `repay_loan(borrower, loan_id)` | `"repay_loan"` | `useRepayLoan()` | `app/user/page.tsx` |
 | `approve_loan(loan_id)` | `"approve_loan"` | `useApproveLoan()` | `app/admin/page.tsx` |
 | `deposit_liquidity(amount)` | `"deposit_liquidity"` | `useDepositLiquidity()` | `app/admin/page.tsx` |

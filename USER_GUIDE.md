@@ -221,9 +221,10 @@ A group of 3-10 people who vouch for each other financially. Members share accou
 3. **Enter Loan Details**
    - **Amount:** Between 10 XLM and your max limit
    - **Purpose:** Brief description (e.g., "Inventory purchase")
+   - **Duration:** Pick a repayment tier — 7, 30, 60, or 90 days
 
 4. **Review Terms**
-   - Duration: 7 days
+   - Duration: your chosen tier (7/30/60/90 days)
    - Interest rate: Based on your score
    - Total repayment: Loan amount + interest
 
@@ -239,7 +240,8 @@ A group of 3-10 people who vouch for each other financially. Members share accou
 7. **Receive Funds**
    - Once approved, XLM arrives in your wallet automatically
    - Loan status changes to "Active"
-   - Due date is 7 days from approval
+   - Due date is your chosen duration (7/30/60/90 days) from approval
+   - A reminder banner appears on your dashboard as the due date approaches
 
 ### Loan Example
 
@@ -247,11 +249,12 @@ A group of 3-10 people who vouch for each other financially. Members share accou
 Trust Score: 75
 Max Loan: 500 XLM
 Interest Rate: 4%
+Duration: 30 days
 
 Request: 300 XLM
 Interest: 300 × 4% = 12 XLM
 Total Repayment: 312 XLM
-Due Date: 7 days from approval
+Due Date: 30 days from approval
 ```
 
 ---
@@ -439,9 +442,13 @@ All loan transactions are **publicly visible on Stellar blockchain**. However, n
 
 Great! You get a **+15 point bonus** for early repayment, vs +10 for on-time.
 
-### Can I extend my loan duration?
+### Can I choose my loan duration?
 
-No, all loans have a fixed **7-day duration**. Plan your repayment accordingly.
+Yes — pick **7, 30, 60, or 90 days** when requesting a loan. You can't change it after submitting, so choose the tier that matches your repayment plan.
+
+### Can I leave a Trust Circle?
+
+Yes — use the **Leave Circle** button on your dashboard. Your staked 10 XLM is refunded immediately. You can't leave while you have an active loan (so the circle's collective accountability can't be avoided mid-loan). If leaving drops the circle below 3 members, it's deactivated until it regains enough members.
 
 ### What if Freighter popup doesn't appear?
 
@@ -468,7 +475,7 @@ No, all loans have a fixed **7-day duration**. Plan your repayment accordingly.
 │ Circle Entry Stake:        10 XLM                       │
 │ Min Circle Members:        3                            │
 │ Max Circle Members:        10                           │
-│ Loan Duration:             7 days                       │
+│ Loan Duration:             7 / 30 / 60 / 90 days         │
 │ Starting Trust Score:      50 points                    │
 │ Early Repayment Bonus:     +15 points                   │
 │ On-Time Repayment:         +10 points                   │
