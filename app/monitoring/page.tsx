@@ -174,7 +174,7 @@ export default function MonitoringDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-gray-400 text-sm">Contract Address</p>
-              <p className="font-mono text-cyan-400 break-all">CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27</p>
+              <p className="font-mono text-cyan-400 break-all">CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT</p>
             </div>
             <div>
               <p className="text-gray-400 text-sm">Network</p>
@@ -187,7 +187,7 @@ export default function MonitoringDashboard() {
             <div>
               <p className="text-gray-400 text-sm">Explorer</p>
               <a 
-                href="https://stellar.expert/explorer/testnet/contract/CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27"
+                href="https://stellar.expert/explorer/testnet/contract/CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT"
                 target="_blank"
                 className="text-cyan-400 hover:underline"
               >

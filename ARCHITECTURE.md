@@ -108,7 +108,7 @@ Key Functions:
 
 ### 3. Smart Contract Layer (Soroban/Rust)
 
-**Contract Address:** `CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27`
+**Contract Address:** `CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT`
 
 **Core Modules:**
 

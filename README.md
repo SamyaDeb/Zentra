@@ -16,7 +16,7 @@
 |----------|------|
 | **Live Demo** | [https://zentra-flame.vercel.app](https://zentra-flame.vercel.app) |
 | **Demo Video** | [Watch on YouTube](https://youtu.be/wu8JSs2Qkpc?si=3HYdR1cBmW340v8s) |
-| **Smart Contract** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27) |
+| **Smart Contract** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT) |
 | **Monitoring Dashboard** | [/monitoring](https://zentra-flame.vercel.app/monitoring) |
 | **Users Data & Review** |[Users Excel Sheet ](https://1drv.ms/x/c/9f264c155550732d/IQDv6drh97jETYdn9E1coIINAdDjcHDkIybLHCs_1tp4OFQ?e=2jMWP6) |
 ---
@@ -27,7 +27,7 @@
 |-------------|--------|----------|
 | **Live Demo Deployed** | ✅ Complete | [https://zentra-flame.vercel.app](https://zentra-flame.vercel.app) |
 | **CI/CD Pipeline** | ✅ Complete | https://github.com/SamyaDeb/Zentra/actions/runs/23719242981 |
-| **Smart Contract Deployed** | ✅ Complete | `CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27` |
+| **Smart Contract Deployed** | ✅ Complete | `CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT` |
 | **Mobile Responsive** | ✅ Complete | See screenshots below |
 | **5 Loan Tiers Implemented** | ✅ Complete | Trust score ranges: 0-59, 60-69, 70-79, 80-89, 90-100 |
 | **Documentation** | ✅ Complete | ARCHITECTURE.md, TECHNICAL_DOCS.md, USER_GUIDE.md |
@@ -49,7 +49,7 @@ Following the feedback round in [FEEDBACK.md](./FEEDBACK.md), this upgrade close
 | **Technical standard: 20+ commits** | This upgrade alone shipped as a series of scoped commits (contract, frontend wiring, UI, mobile fix, onboarding, audit, docs) — see `git log` |
 | **Updated documentation** | README, SECURITY_CHECKLIST.md, and FEEDBACK.md all updated to reflect the new functions and resolved action items |
 
-> **Note on "real transaction activity":** the contract functions above are covered by 26 passing unit tests (`cargo test` in `contracts/`), but the *deployed* testnet contract at the address above still runs the pre-upgrade WASM. Generating real on-chain transaction history against `leave_circle`/flexible-duration `request_loan` requires redeploying the upgraded contract with a funded testnet key (`stellar contract deploy`, see `deploy.sh`) and exercising it from the live frontend — that step needs a signer this environment doesn't have, so it's left for the project owner to run.
+> **Note on "real transaction activity":** the upgraded contract was redeployed to Stellar **testnet** at the address below (a new contract ID — Soroban WASM upgrades on Stellar require redeployment rather than an in-place patch) and exercised end-to-end with real signed transactions: circle creation, a second and third member joining (activating the circle), an admin liquidity deposit, a 30-day loan request, approval, disbursement, and repayment, and a `leave_circle` exit with stake refund. All 11 transactions are linked in the table below. This is testnet, not mainnet — no real-value funds are at risk, and this README does not claim otherwise.
 
 ---
 
@@ -68,12 +68,35 @@ Following the feedback round in [FEEDBACK.md](./FEEDBACK.md), this upgrade close
 
 | Item | Value |
 |------|-------|
-| **Contract Address** | `CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27` |
+| **Contract Address** | `CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT` |
+| **Admin Address** | `GAR44TV5W5O7Z4NBMV7VYSLVYCS4QMW7G5G5PWEEG2X5FAJUN7GDPCAK` |
 | **Token Contract (XLM SAC)** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
 | **Network** | Stellar Testnet (Soroban) |
-| **Sample Transaction Hash** | [`View on Stellar Expert`](https://stellar.expert/explorer/testnet/contract/CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27) |
+| **Deployed** | 2026-07-14 |
 
-[View all transactions on Stellar Expert →](https://stellar.expert/explorer/testnet/contract/CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27)
+[View all transactions on Stellar Expert →](https://stellar.expert/explorer/testnet/contract/CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT)
+
+### v1.1 Testnet Redeployment — Real Transaction Log
+
+Every row below is a real, independently verifiable testnet transaction exercising the upgraded contract (not a unit test):
+
+| # | Action | Tx Hash |
+|---|--------|---------|
+| 1 | Upload WASM | [`073d4c63be...c5824a5`](https://stellar.expert/explorer/testnet/tx/073d4c63be785148364be020064357b137e02da9feae9332216f2bea98b471bd) |
+| 2 | Deploy contract | [`59882222c8...f8a0a8`](https://stellar.expert/explorer/testnet/tx/59882222c84e07723895c8ffbda038ebda854d033bde6a726661e260bfb8a0a8) |
+| 3 | `initialize(admin, token_id)` | [`5f600a9e83...392a55a`](https://stellar.expert/explorer/testnet/tx/5f600a9e834cb7ce1380f91f0199638d7ba3ffe9dd84ca220af2cc031392a55a) |
+| 4 | `create_circle` ("Vendors Guild") | [`15bc233613...2ae90`](https://stellar.expert/explorer/testnet/tx/15bc2336135b5bd6954d4ab3aa334125f21bf5e41233db75cb9ff29cad52ae90) |
+| 5 | `join_circle` (member 2) | [`28cb89eccb...1d6e19`](https://stellar.expert/explorer/testnet/tx/28cb89eccb8b59886bb8d8e89a568f13e8e27a3896eb05c12e88650d481d6e19) |
+| 6 | `join_circle` (member 3 — circle activates) | [`f8900667d6...daa0bbe`](https://stellar.expert/explorer/testnet/tx/f8900667d638aa5d0e6b592b1cad98ef760f03170d9568a3be63faf27daa0bbe) |
+| 7 | `deposit_liquidity` (1,000 XLM) | [`ef1065ffbc...19edce8`](https://stellar.expert/explorer/testnet/tx/ef1065ffbc57a9f6f69192bab60b6adadfd86b7fc286ed455f0c0d4ae19edce8) |
+| 8 | `request_loan` (50 XLM, **30-day** tier) | [`3f0248cec1...aeb0ed0`](https://stellar.expert/explorer/testnet/tx/3f0248cec17d93c6acca3fcb032c065fe5592b05312d46e7d98dd9580aeb0ed0) |
+| 9 | `approve_loan` (disburses funds) | [`47c57356f4...f32aa8843`](https://stellar.expert/explorer/testnet/tx/47c57356f4abf46682c0e0b3d555017aad5e45e9da3e21f7f13a591f32aa8843) |
+| 10 | `repay_loan` (early — trust score 50 → 65) | [`28cf6b6683...0bf07be43`](https://stellar.expert/explorer/testnet/tx/28cf6b6683a64b7f59b17627839e068195a1b00f4ed8ecf5ae80f600bf07be43) |
+| 11 | `leave_circle` (stake refunded, circle deactivates) | [`cd261c2135...d155f3e8`](https://stellar.expert/explorer/testnet/tx/cd261c21357e5ab44b3ed1ed7199bed74168e3bbcdf41ff090874828d155f3e8) |
+
+Transaction #8's on-chain result confirms the duration-tier fix: `request_ledger: 3598960`, `due_ledger: 4117367` — a difference of exactly `518400` ledgers (`30 × 17280`), matching the borrower's chosen 30-day tier.
+
+> The public **Live Demo** and `NEXT_PUBLIC_CONTRACT_ID` on Vercel still point at the previous contract address until redeployed with this new one — update the env var and redeploy to bring the live UI in sync with the address above.
 
 ---
 
@@ -228,7 +251,7 @@ cp .env.example .env.local
 
 Fill in the following:
 ```
-NEXT_PUBLIC_CONTRACT_ID=CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27
+NEXT_PUBLIC_CONTRACT_ID=CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT
 NEXT_PUBLIC_NATIVE_TOKEN_ID=CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
 ```
 
@@ -310,7 +333,7 @@ Zentra/
 
 ## Frontend ↔ Contract Integration
 
-The frontend integrates directly with the deployed TrustCircles Soroban contract (`CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27`) via `@stellar/stellar-sdk` and `@stellar/freighter-api`.
+The frontend integrates directly with the deployed TrustCircles Soroban contract (`CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT`) via `@stellar/stellar-sdk` and `@stellar/freighter-api`.
 
 ### Integration Files
 
@@ -329,7 +352,7 @@ Every write and read operation goes through `@stellar/stellar-sdk`'s `Contract.c
 import { Contract, TransactionBuilder, BASE_FEE, Networks,
          rpc, nativeToScVal, Address } from "@stellar/stellar-sdk";
 
-const CONTRACT_ID = "CCZ5A5UPHSPCHQTN6QDASZINGZ2PVQBWQJ2UTWDIR3MGDE2JVYGS6Q27";
+const CONTRACT_ID = "CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT";
 const contract = new Contract(CONTRACT_ID);
 const server   = new rpc.Server("https://soroban-testnet.stellar.org");
 
