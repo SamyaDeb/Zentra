@@ -6,7 +6,7 @@
 
 ![Zentra Badge](https://img.shields.io/badge/Track-Web3%20Credit-blue)
 ![Status](https://img.shields.io/badge/Status-Live%20MVP-green)
-![Network](https://img.shields.io/badge/Network-Stellar%20Testnet-brightgreen)
+![Network](https://img.shields.io/badge/Network-Stellar%20Mainnet-brightgreen)
 ![CI/CD](https://github.com/SamyaDeb/Zentra/actions/workflows/ci.yml/badge.svg)
 ---
 
@@ -76,7 +76,7 @@ Following the feedback round in [FEEDBACK.md](./FEEDBACK.md), this upgrade close
 
 [View all transactions on Stellar Expert →](https://stellar.expert/explorer/testnet/contract/CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT)
 
-### v1.1 Testnet Redeployment — Real Transaction Log
+### v1.1 Mainnet Redeployment — Real Transaction Log
 
 Every row below is a real, independently verifiable testnet transaction exercising the upgraded contract (not a unit test):
 
