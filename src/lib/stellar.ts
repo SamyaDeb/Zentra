@@ -13,6 +13,7 @@
  * Circle Management:
  *   create_circle()        → createCircleCall()   [write]
  *   join_circle()          → joinCircleCall()     [write]
+ *   leave_circle()         → leaveCircleCall()    [write]
  *
  * Scoring (read-only):
  *   get_circle_average_score() → (called internally)
@@ -101,7 +102,12 @@ export interface Loan {
   disbursed: boolean;
   repaid: boolean;
   purpose: string;
+  durationDays: number;
 }
+
+/** Loan durations accepted by the contract's request_loan(duration_days) param */
+export const LOAN_DURATION_OPTIONS_DAYS = [7, 30, 60, 90] as const;
+export type LoanDurationDays = (typeof LOAN_DURATION_OPTIONS_DAYS)[number];
 
 // ============ RPC CLIENT ============
 
@@ -258,6 +264,7 @@ export async function getLoanDetails(
     disbursed: raw.disbursed as boolean,
     repaid: raw.repaid as boolean,
     purpose: raw.purpose as string,
+    durationDays: Number(raw.duration_days),
   };
 }
 
@@ -413,15 +420,21 @@ export async function joinCircleCall(
   return [new Address(publicKey).toScVal(), nativeToScVal(circleId, { type: "u32" })];
 }
 
+export async function leaveCircleCall(publicKey: string): Promise<xdr.ScVal[]> {
+  return [new Address(publicKey).toScVal()];
+}
+
 export async function requestLoanCall(
   publicKey: string,
   amountStroops: bigint,
-  purpose: string
+  purpose: string,
+  durationDays: number
 ): Promise<xdr.ScVal[]> {
   return [
     new Address(publicKey).toScVal(),
     nativeToScVal(amountStroops, { type: "i128" }),
     nativeToScVal(purpose, { type: "string" }),
+    nativeToScVal(durationDays, { type: "u32" }),
   ];
 }
 

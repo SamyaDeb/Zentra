@@ -11,6 +11,7 @@
  * Circle Management:
  *   create_circle()        → useCreateCircle()   → calls "create_circle" on-chain
  *   join_circle()          → useJoinCircle()     → calls "join_circle" on-chain
+ *   leave_circle()         → useLeaveCircle()    → calls "leave_circle" on-chain
  *
  * Loan Management:
  *   request_loan()         → useRequestLoan()    → calls "request_loan" on-chain
@@ -594,13 +595,14 @@ export function useRequestLoan() {
   const requestLoan = useCallback(async (
     publicKey: string,
     amountXlm: number,
-    purpose: string
+    purpose: string,
+    durationDays: number = 7
   ) => {
     setState({ isPending: true, isSuccess: false, error: null, txHash: null });
-    
+
     try {
       const amountStroops = xlmToStroops(amountXlm);
-      
+
       const txHash = await submitContractTransaction(
         publicKey,
         "request_loan",
@@ -608,9 +610,10 @@ export function useRequestLoan() {
           new Address(publicKey).toScVal(),
           nativeToScVal(amountStroops, { type: "i128" }),
           nativeToScVal(purpose, { type: "string" }),
+          nativeToScVal(durationDays, { type: "u32" }),
         ]
       );
-      
+
       setState({ isPending: false, isSuccess: true, error: null, txHash });
     } catch (error) {
       setState({
@@ -623,6 +626,41 @@ export function useRequestLoan() {
   }, []);
 
   return { ...state, requestLoan };
+}
+
+/**
+ * Hook for leaving a circle and reclaiming the staked amount
+ */
+export function useLeaveCircle() {
+  const [state, setState] = useState<TransactionState>({
+    isPending: false,
+    isSuccess: false,
+    error: null,
+    txHash: null,
+  });
+
+  const leaveCircle = useCallback(async (publicKey: string) => {
+    setState({ isPending: true, isSuccess: false, error: null, txHash: null });
+
+    try {
+      const txHash = await submitContractTransaction(
+        publicKey,
+        "leave_circle",
+        [new Address(publicKey).toScVal()]
+      );
+
+      setState({ isPending: false, isSuccess: true, error: null, txHash });
+    } catch (error) {
+      setState({
+        isPending: false,
+        isSuccess: false,
+        error: error instanceof Error ? error.message : "Transaction failed",
+        txHash: null,
+      });
+    }
+  }, []);
+
+  return { ...state, leaveCircle };
 }
 
 /**
