@@ -70,9 +70,9 @@ export default function Navbar() {
   return (
     <>
       <div className="absolute top-[25px] left-0 right-0 z-50 py-4 pointer-events-none">
-        <div 
+        <div
           id="floating-navbar"
-          className="flex max-w-4xl mx-auto border border-white/20 dark:border-gray-300/20 rounded-3xl bg-white/10 backdrop-blur-md shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(255,255,255,0.1),0px_0px_0px_1px_rgba(255,255,255,0.05)] px-4 py-2 items-center justify-between gap-[3px] relative pointer-events-auto"
+          className="flex max-w-4xl mx-4 sm:mx-auto border border-white/20 dark:border-gray-300/20 rounded-3xl bg-white/10 backdrop-blur-md shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(255,255,255,0.1),0px_0px_0px_1px_rgba(255,255,255,0.05)] px-2 sm:px-4 py-2 items-center justify-between gap-[3px] relative pointer-events-auto"
         >
           {/* Animated Background */}
           <div 
@@ -80,19 +80,19 @@ export default function Navbar() {
           />
 
           {/* Logo */}
-          <div className="flex items-center space-x-2 w-[150px] ml-[5px]">
-            <img 
-              src="/images/Zentra.JPEG" 
-              alt="Zentra" 
-              width="32" 
-              height="32" 
-              className="rounded-full"
+          <div className="flex items-center space-x-2 w-[40px] sm:w-[150px] ml-[5px]">
+            <img
+              src="/images/Zentra.JPEG"
+              alt="Zentra"
+              width="32"
+              height="32"
+              className="rounded-full shrink-0"
             />
-            <span className="text-xl font-semibold text-white">Zentra</span>
+            <span className="hidden sm:block text-xl font-semibold text-white whitespace-nowrap">Zentra</span>
           </div>
 
           {/* Navigation Links */}
-          <div className="flex items-center space-x-5 -ml-[10px] relative z-10">
+          <div className="flex items-center space-x-3 sm:space-x-5 -ml-[10px] relative z-10">
             <button
               onClick={() => router.push('/')}
               className="relative text-white hover:text-white/80 items-center flex space-x-1 transition cursor-pointer"
@@ -142,15 +142,15 @@ export default function Navbar() {
             {isConnected && publicKey ? (
               <button
                 onClick={handleDisconnect}
-                className="group relative flex cursor-pointer items-center justify-center whitespace-nowrap border border-white/10 px-6 py-3 text-white bg-black rounded-[100px] transform-gpu transition-transform duration-300 ease-in-out active:translate-y-px w-[150px] overflow-visible"
+                className="group relative flex cursor-pointer items-center justify-center whitespace-nowrap border border-white/10 px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base text-white bg-black rounded-[100px] transform-gpu transition-transform duration-300 ease-in-out active:translate-y-px w-[100px] sm:w-[150px] overflow-visible"
               >
                 <div className="pointer-events-none absolute inset-0 rounded-[inherit] border border-transparent [mask-clip:padding-box,border-box] [mask-composite:intersect] [mask-image:linear-gradient(transparent,transparent),linear-gradient(#000,#000)]">
                   <div className="absolute aspect-square bg-gradient-to-l from-[#22c55e] to-transparent animate-border-orbit opacity-90" style={{ width: '51px', offsetPath: 'rect(0px auto auto 0px round 40px)' }}></div>
                 </div>
-                
+
                 {/* Green dot indicator */}
-                <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-                
+                <span className="w-2 h-2 bg-green-400 rounded-full mr-1.5 sm:mr-2 shrink-0 animate-pulse"></span>
+
                 <span className="relative z-20">Disconnect</span>
                 <div className="pointer-events-none insert-0 absolute size-full rounded-2xl px-4 py-1.5 text-sm font-medium shadow-[inset_0_-8px_10px_#ffffff1f] transform-gpu transition-all duration-300 ease-in-out group-hover:shadow-[inset_0_-6px_10px_#ffffff3f] group-active:shadow-[inset_0_-10px_10px_#ffffff3f]"></div>
                 <div className="pointer-events-none absolute -z-10 bg-black rounded-[100px] inset-[0.05em]"></div>
@@ -158,12 +158,15 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={handleConnectClick}
-                className="group relative flex cursor-pointer items-center justify-center whitespace-nowrap border border-white/10 px-6 py-3 text-white bg-black rounded-[100px] transform-gpu transition-transform duration-300 ease-in-out active:translate-y-px w-[150px] overflow-visible"
+                className="group relative flex cursor-pointer items-center justify-center whitespace-nowrap border border-white/10 px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base text-white bg-black rounded-[100px] transform-gpu transition-transform duration-300 ease-in-out active:translate-y-px w-[100px] sm:w-[150px] overflow-visible"
               >
                 <div className="pointer-events-none absolute inset-0 rounded-[inherit] border border-transparent [mask-clip:padding-box,border-box] [mask-composite:intersect] [mask-image:linear-gradient(transparent,transparent),linear-gradient(#000,#000)]">
                   <div className="absolute aspect-square bg-gradient-to-l from-[#FF0000] to-transparent animate-border-orbit opacity-90" style={{ width: '51px', offsetPath: 'rect(0px auto auto 0px round 40px)' }}></div>
                 </div>
-                <span className="relative z-20">Connect Wallet</span>
+                <span className="relative z-20">
+                  <span className="sm:hidden">Connect</span>
+                  <span className="hidden sm:inline">Connect Wallet</span>
+                </span>
                 <div className="pointer-events-none insert-0 absolute size-full rounded-2xl px-4 py-1.5 text-sm font-medium shadow-[inset_0_-8px_10px_#ffffff1f] transform-gpu transition-all duration-300 ease-in-out group-hover:shadow-[inset_0_-6px_10px_#ffffff3f] group-active:shadow-[inset_0_-10px_10px_#ffffff3f]"></div>
                 <div className="pointer-events-none absolute -z-10 bg-black rounded-[100px] inset-[0.05em]"></div>
               </button>
