@@ -148,7 +148,10 @@ export default function UserPage() {
         <Navbar />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative" style={{ paddingTop: '180px', zIndex: 10 }}>
-          
+
+          {/* Onboarding Guide (first-time users) */}
+          <OnboardingGuide stats={stats} loans={userLoans} />
+
           {/* Trust Score Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <ScoreCard 
@@ -219,6 +222,67 @@ export default function UserPage() {
         </main>
       </div>
     </>
+  );
+}
+
+// Onboarding Guide — a lightweight, dismissible step tracker shown to
+// first-time users so the borrower flow (circle → loan) is discoverable
+// without having to read the docs. Hides itself once the user has
+// completed a loan, or if manually dismissed.
+function OnboardingGuide({ stats, loans }: { stats: any; loans: Loan[] }) {
+  const [dismissed, setDismissed] = useState(true); // default hidden until localStorage check runs
+
+  useEffect(() => {
+    setDismissed(window.localStorage.getItem('zentra_onboarding_dismissed') === '1');
+  }, []);
+
+  const hasCircle = (stats?.circleId || 0) > 0;
+  const hasRequestedLoan = loans.length > 0;
+  const hasActiveLoan = !!stats?.hasActiveLoan;
+  const hasCompletedLoan = (stats?.loansCompleted || 0) > 0;
+
+  if (dismissed || hasCompletedLoan) return null;
+
+  const steps = [
+    { label: 'Connect wallet', done: true },
+    { label: 'Join or create a Trust Circle', done: hasCircle },
+    { label: 'Request your first loan', done: hasRequestedLoan },
+    { label: 'Repay on time to grow your score', done: hasActiveLoan || hasCompletedLoan ? hasCompletedLoan : false },
+  ];
+
+  const handleDismiss = () => {
+    window.localStorage.setItem('zentra_onboarding_dismissed', '1');
+    setDismissed(true);
+  };
+
+  return (
+    <div className="mb-6 bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-white font-semibold text-sm">Getting Started</h3>
+        <button
+          onClick={handleDismiss}
+          aria-label="Dismiss onboarding guide"
+          className="text-white/50 hover:text-white text-xs"
+        >
+          Dismiss
+        </button>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {steps.map((step, i) => (
+          <div
+            key={step.label}
+            className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg border ${
+              step.done
+                ? 'border-green-500/30 bg-green-500/10 text-green-300'
+                : 'border-white/10 bg-white/5 text-white/60'
+            }`}
+          >
+            <span className="shrink-0">{step.done ? '✓' : i + 1}</span>
+            <span>{step.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
