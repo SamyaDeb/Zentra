@@ -377,6 +377,16 @@ export async function isLoanOverdue(
 }
 
 /**
+ * Get the latest closed ledger sequence — used client-side to estimate
+ * how much time remains before an active loan's due_ledger.
+ */
+export async function getLatestLedgerSequence(): Promise<number> {
+  const server = getSorobanServer();
+  const latest = await server.getLatestLedger();
+  return latest.sequence;
+}
+
+/**
  * Check if demo mode is enabled
  */
 export async function isDemoMode(sourceAccount: string): Promise<boolean> {

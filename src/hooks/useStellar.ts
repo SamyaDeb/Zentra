@@ -79,6 +79,7 @@ import {
   getContractBalance,
   getLoanCount,
   getCircleCount,
+  getLatestLedgerSequence,
   type UserStats,
   type CircleDetails,
   type Loan,
@@ -1119,6 +1120,37 @@ export function useAllPendingLoans(publicKey: string | null) {
   }, [refetch]);
 
   return { loans, isLoading, error, refetch };
+}
+
+/**
+ * Hook for polling the latest ledger sequence — used to estimate time
+ * remaining until an active loan's due_ledger for reminder banners.
+ */
+export function useLatestLedger(pollIntervalMs: number = 30000) {
+  const [sequence, setSequence] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchLedger = async () => {
+      try {
+        const seq = await getLatestLedgerSequence();
+        if (!cancelled) setSequence(seq);
+      } catch {
+        // Non-critical for a reminder banner — silently skip this tick
+      }
+    };
+
+    fetchLedger();
+    const interval = setInterval(fetchLedger, pollIntervalMs);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [pollIntervalMs]);
+
+  return sequence;
 }
 
 /**
