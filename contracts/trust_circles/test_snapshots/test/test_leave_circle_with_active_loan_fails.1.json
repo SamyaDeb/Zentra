@@ -113,7 +113,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                 },
                 {
-                  "string": "Loan Circle"
+                  "string": "Loan Lock Circle"
                 }
               ]
             }
@@ -257,7 +257,7 @@
                   }
                 },
                 {
-                  "string": "Business inventory"
+                  "string": "Locked by loan"
                 },
                 {
                   "u32": 7
@@ -269,7 +269,6 @@
         }
       ]
     ],
-    [],
     []
   ],
   "ledger": {
@@ -526,7 +525,7 @@
                         "symbol": "name"
                       },
                       "val": {
-                        "string": "Loan Circle"
+                        "string": "Loan Lock Circle"
                       }
                     },
                     {
@@ -714,7 +713,7 @@
                         "symbol": "purpose"
                       },
                       "val": {
-                        "string": "Business inventory"
+                        "string": "Locked by loan"
                       }
                     },
                     {

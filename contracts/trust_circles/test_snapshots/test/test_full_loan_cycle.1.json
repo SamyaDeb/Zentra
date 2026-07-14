@@ -329,6 +329,9 @@
                 },
                 {
                   "string": "Equipment purchase"
+                },
+                {
+                  "u32": 7
                 }
               ]
             }
@@ -970,7 +973,15 @@
                         "symbol": "due_ledger"
                       },
                       "val": {
-                        "u32": 17280
+                        "u32": 120960
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "duration_days"
+                      },
+                      "val": {
+                        "u32": 7
                       }
                     },
                     {

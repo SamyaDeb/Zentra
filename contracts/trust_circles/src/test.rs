@@ -137,6 +137,85 @@ fn test_join_circle_already_member() {
     client.join_circle(&user, &circle_id); // Should panic - already in circle
 }
 
+// ============ LEAVE CIRCLE TESTS ============
+
+#[test]
+fn test_leave_circle_refunds_stake_and_deactivates() {
+    let (env, admin, token_id, contract_id) = setup_env();
+    initialize_contract(&env, &contract_id, &admin, &token_id);
+
+    let client = TrustCirclesContractClient::new(&env, &contract_id);
+    let users = create_test_users(&env, 3);
+    let name = String::from_str(&env, "Leaveable Circle");
+
+    for user in &users {
+        mint_tokens(&env, &token_id, user, MIN_STAKE);
+    }
+
+    let circle_id = client.create_circle(&users[0], &name);
+    client.join_circle(&users[1], &circle_id);
+    client.join_circle(&users[2], &circle_id);
+
+    let details = client.get_circle_details(&circle_id);
+    assert_eq!(details.is_active, true);
+
+    let token_client = soroban_sdk::token::TokenClient::new(&env, &token_id);
+    let balance_before = token_client.balance(&users[2]);
+
+    // Member leaves — stake should be refunded and circle drops below minimum
+    client.leave_circle(&users[2]);
+
+    let balance_after = token_client.balance(&users[2]);
+    assert_eq!(balance_after, balance_before + MIN_STAKE);
+
+    let details_after = client.get_circle_details(&circle_id);
+    assert_eq!(details_after.member_count, 2);
+    assert_eq!(details_after.is_active, false); // Below MIN_CIRCLE_MEMBERS
+
+    // Member can now join a different circle
+    let stats = client.get_user_stats(&users[2]);
+    assert_eq!(stats.circle_id, 0);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #26)")]
+fn test_leave_circle_with_active_loan_fails() {
+    let (env, admin, token_id, contract_id) = setup_env();
+    initialize_contract(&env, &contract_id, &admin, &token_id);
+
+    let client = TrustCirclesContractClient::new(&env, &contract_id);
+    let users = create_test_users(&env, 3);
+    let name = String::from_str(&env, "Loan Lock Circle");
+
+    for user in &users {
+        mint_tokens(&env, &token_id, user, MIN_STAKE);
+    }
+
+    let circle_id = client.create_circle(&users[0], &name);
+    client.join_circle(&users[1], &circle_id);
+    client.join_circle(&users[2], &circle_id);
+
+    let loan_amount: i128 = 50_0000000;
+    let purpose = String::from_str(&env, "Locked by loan");
+    client.request_loan(&users[0], &loan_amount, &purpose, &7u32);
+
+    // Should panic - borrower has an active (unrepaid) loan
+    client.leave_circle(&users[0]);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #9)")]
+fn test_leave_circle_not_in_circle_fails() {
+    let (env, admin, token_id, contract_id) = setup_env();
+    initialize_contract(&env, &contract_id, &admin, &token_id);
+
+    let client = TrustCirclesContractClient::new(&env, &contract_id);
+    let user = Address::generate(&env);
+
+    // Should panic - user was never in a circle
+    client.leave_circle(&user);
+}
+
 // ============ SCORING TESTS ============
 
 #[test]
@@ -417,7 +496,7 @@ fn test_request_loan() {
     let loan_amount: i128 = 50_0000000; // 50 XLM
     let purpose = String::from_str(&env, "Business inventory");
 
-    let loan_id = client.request_loan(&users[0], &loan_amount, &purpose);
+    let loan_id = client.request_loan(&users[0], &loan_amount, &purpose, &7u32);
 
     assert_eq!(loan_id, 1);
     assert_eq!(client.get_loan_count(), 1);
@@ -425,6 +504,64 @@ fn test_request_loan() {
     // Check user stats
     let stats = client.get_user_stats(&users[0]);
     assert_eq!(stats.has_active_loan, true);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #25)")]
+fn test_request_loan_invalid_duration() {
+    let (env, admin, token_id, contract_id) = setup_env();
+    initialize_contract(&env, &contract_id, &admin, &token_id);
+
+    let client = TrustCirclesContractClient::new(&env, &contract_id);
+    let users = create_test_users(&env, 3);
+    let circle_name = String::from_str(&env, "Duration Circle");
+
+    for user in &users {
+        mint_tokens(&env, &token_id, user, MIN_STAKE);
+    }
+
+    let circle_id = client.create_circle(&users[0], &circle_name);
+    client.join_circle(&users[1], &circle_id);
+    client.join_circle(&users[2], &circle_id);
+
+    let loan_amount: i128 = 50_0000000;
+    let purpose = String::from_str(&env, "Invalid duration test");
+
+    // 45 days is not one of the allowed tiers (7/30/60/90) — should panic
+    client.request_loan(&users[0], &loan_amount, &purpose, &45u32);
+}
+
+#[test]
+fn test_request_loan_flexible_duration_sets_due_ledger() {
+    let (env, admin, token_id, contract_id) = setup_env();
+    initialize_contract(&env, &contract_id, &admin, &token_id);
+
+    let client = TrustCirclesContractClient::new(&env, &contract_id);
+    let users = create_test_users(&env, 3);
+    let circle_name = String::from_str(&env, "Sixty Day Circle");
+
+    for user in &users {
+        mint_tokens(&env, &token_id, user, MIN_STAKE);
+    }
+
+    let deposit_amount: i128 = 1000_0000000;
+    mint_tokens(&env, &token_id, &admin, deposit_amount);
+    client.deposit_liquidity(&deposit_amount);
+
+    let circle_id = client.create_circle(&users[0], &circle_name);
+    client.join_circle(&users[1], &circle_id);
+    client.join_circle(&users[2], &circle_id);
+
+    let loan_amount: i128 = 50_0000000;
+    let purpose = String::from_str(&env, "60-day inventory loan");
+    let loan_id = client.request_loan(&users[0], &loan_amount, &purpose, &60u32);
+
+    let request_ledger = env.ledger().sequence();
+    client.approve_loan(&loan_id);
+
+    let loan = client.get_loan_details(&loan_id);
+    assert_eq!(loan.duration_days, 60);
+    assert_eq!(loan.due_ledger, request_ledger + 60 * LEDGERS_PER_DAY);
 }
 
 #[test]
@@ -454,7 +591,7 @@ fn test_full_loan_cycle() {
     // Request loan
     let loan_amount: i128 = 50_0000000; // 50 XLM
     let purpose = String::from_str(&env, "Equipment purchase");
-    let loan_id = client.request_loan(&users[0], &loan_amount, &purpose);
+    let loan_id = client.request_loan(&users[0], &loan_amount, &purpose, &7u32);
 
     // Approve loan
     client.approve_loan(&loan_id);

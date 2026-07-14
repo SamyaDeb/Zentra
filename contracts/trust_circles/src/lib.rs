@@ -20,7 +20,8 @@ const MAX_CIRCLE_MEMBERS: u32 = 10;
 const STARTING_SCORE: u32 = 50;
 const MAX_SCORE: u32 = 100;
 const MIN_STAKE: i128 = 10_0000000; // 10 XLM (7 decimals)
-const LOAN_DURATION_LEDGERS: u32 = 17280; // ~1 day in ledgers (5 sec/ledger) * 7 days
+const LEDGERS_PER_DAY: u32 = 17280; // 86400 sec/day ÷ 5 sec/ledger
+const ALLOWED_LOAN_DURATIONS_DAYS: [u32; 4] = [7, 30, 60, 90];
 const INDIVIDUAL_WEIGHT: u32 = 60;
 const CIRCLE_WEIGHT: u32 = 40;
 
@@ -72,6 +73,7 @@ pub struct Loan {
     pub disbursed: bool,
     pub repaid: bool,
     pub purpose: String,
+    pub duration_days: u32,
 }
 
 #[contracttype]
@@ -147,6 +149,8 @@ pub enum Error {
     InvalidPurpose = 22,
     InvalidName = 23,
     LoanNotOverdue = 24,
+    InvalidLoanDuration = 25,
+    CannotLeaveWithActiveLoan = 26,
 }
 
 // ============ CONTRACT ============
@@ -306,6 +310,65 @@ impl TrustCirclesContract {
         Ok(())
     }
 
+    /// Leave a Trust Circle and reclaim the staked amount.
+    /// Blocked while the member has an active loan so the circle's collective
+    /// accountability (see `penalize_circle`) can't be sidestepped mid-loan.
+    /// If membership drops below the minimum, the circle is deactivated.
+    pub fn leave_circle(env: Env, member: Address) -> Result<(), Error> {
+        member.require_auth();
+
+        let mut member_data = storage::get_member(&env, &member).ok_or(Error::NotInCircle)?;
+
+        if member_data.circle_id == 0 {
+            return Err(Error::NotInCircle);
+        }
+
+        if member_data.has_active_loan {
+            return Err(Error::CannotLeaveWithActiveLoan);
+        }
+
+        let circle_id = member_data.circle_id;
+        let mut circle = storage::get_circle(&env, circle_id)?;
+
+        // Rebuild the member list without this member
+        let mut remaining = Vec::new(&env);
+        for addr in circle.members.iter() {
+            if addr != member {
+                remaining.push_back(addr.clone());
+            }
+        }
+        circle.members = remaining;
+
+        let refund = member_data.trust_bond;
+        circle.total_stake -= refund;
+
+        // Deactivate the circle if it drops below the minimum required members
+        if circle.members.len() < MIN_CIRCLE_MEMBERS {
+            circle.is_active = false;
+        }
+
+        storage::set_circle(&env, circle_id, &circle);
+
+        // Refund the member's stake from the contract's token balance
+        if refund > 0 {
+            let token_id = storage::get_token_id(&env)?;
+            let token = TokenClient::new(&env, &token_id);
+            token.transfer(&env.current_contract_address(), &member, &refund);
+        }
+
+        // Clear circle membership but preserve score/loan history
+        member_data.circle_id = 0;
+        member_data.trust_bond = 0;
+        storage::set_member(&env, &member, &member_data);
+
+        env.events().publish(
+            (symbol_short!("circle"), symbol_short!("left")),
+            (circle_id, member, refund),
+        );
+
+        Ok(())
+    }
+
     // ============ SCORING ============
 
     /// Get circle's average score
@@ -403,12 +466,13 @@ impl TrustCirclesContract {
 
     // ============ LOAN MANAGEMENT ============
 
-    /// Request a new loan
+    /// Request a new loan with a chosen repayment duration (7, 30, 60, or 90 days)
     pub fn request_loan(
         env: Env,
         borrower: Address,
         amount: i128,
         purpose: String,
+        duration_days: u32,
     ) -> Result<u32, Error> {
         borrower.require_auth();
 
@@ -418,6 +482,10 @@ impl TrustCirclesContract {
 
         if purpose.len() == 0 {
             return Err(Error::InvalidPurpose);
+        }
+
+        if !ALLOWED_LOAN_DURATIONS_DAYS.contains(&duration_days) {
+            return Err(Error::InvalidLoanDuration);
         }
 
         // Get member data
@@ -470,6 +538,7 @@ impl TrustCirclesContract {
             disbursed: false,
             repaid: false,
             purpose: purpose.clone(),
+            duration_days,
         };
 
         storage::set_loan(&env, loan_count, &loan);
@@ -517,11 +586,13 @@ impl TrustCirclesContract {
         // Disburse immediately
         loan.disbursed = true;
 
-        // Set due date
+        // Set due date. In demo mode, use the fast admin-configured duration so
+        // demos don't require waiting real days; otherwise use the borrower's
+        // chosen repayment duration (7/30/60/90 days) converted to ledgers.
         let loan_duration = if storage::get_demo_mode(&env) {
             storage::get_demo_loan_duration(&env)
         } else {
-            LOAN_DURATION_LEDGERS
+            loan.duration_days * LEDGERS_PER_DAY
         };
         loan.due_ledger = env.ledger().sequence() + loan_duration;
 
