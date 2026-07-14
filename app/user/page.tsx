@@ -9,12 +9,14 @@ import {
   useUserLoansData,
   useCreateCircle,
   useJoinCircle,
+  useLeaveCircle,
   useRequestLoan,
   useRepayLoan,
   useAllCircles,
+  useLatestLedger,
 } from '@/src/hooks/useStellar';
-import { formatXlm, stroopsToXlm, ledgersToTime } from '@/config/stellarConfig';
-import type { Loan } from '@/src/lib/stellar';
+import { formatXlm, stroopsToXlm, ledgersToTime, LEDGER_CONSTANTS } from '@/config/stellarConfig';
+import { LOAN_DURATION_OPTIONS_DAYS, type Loan } from '@/src/lib/stellar';
 
 export default function UserPage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -24,7 +26,8 @@ export default function UserPage() {
   const { stats, refetch: refetchStats } = useUserStats(publicKey);
   const { loans: userLoans, refetch: refetchLoans } = useUserLoansData(publicKey);
   const { circles } = useAllCircles(publicKey);
-  
+  const latestLedger = useLatestLedger();
+
   // Get circle details if user is in a circle
   const userCircleId = stats?.circleId || 0;
   const { circle: circleDetails, refetch: refetchCircle } = useCircleDetails(publicKey, userCircleId > 0 ? userCircleId : null);
@@ -184,6 +187,9 @@ export default function UserPage() {
             <LoanEligibility stats={stats} />
           </div>
 
+          {/* Due-Date Reminder */}
+          <LoanDueReminder loans={userLoans} latestLedger={latestLedger} />
+
           {/* Loan Request */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <RequestLoanForm
@@ -248,23 +254,34 @@ function CircleManagement({ stats, circleDetails, circleCount, publicKey, onSucc
   
   const { createCircle, isPending: isCreating, isSuccess: createSuccess, error: createError } = useCreateCircle();
   const { joinCircle, isPending: isJoining, isSuccess: joinSuccess, error: joinError } = useJoinCircle();
+  const { leaveCircle, isPending: isLeaving, isSuccess: leaveSuccess, error: leaveError } = useLeaveCircle();
 
   useEffect(() => {
-    if (createSuccess || joinSuccess) {
+    if (createSuccess || joinSuccess || leaveSuccess) {
       onSuccess();
       setShowCreate(false);
       setShowJoin(false);
       setCircleName('');
       setCircleIdToJoin('');
-      alert(createSuccess ? 'Circle created!' : 'Joined circle!');
+      alert(createSuccess ? 'Circle created!' : leaveSuccess ? 'You left the circle — your stake was refunded.' : 'Joined circle!');
     }
-  }, [createSuccess, joinSuccess, onSuccess]);
+  }, [createSuccess, joinSuccess, leaveSuccess, onSuccess]);
 
   useEffect(() => {
-    if (createError || joinError) {
-      alert(createError || joinError);
+    if (createError || joinError || leaveError) {
+      alert(createError || joinError || leaveError);
     }
-  }, [createError, joinError]);
+  }, [createError, joinError, leaveError]);
+
+  const handleLeave = () => {
+    if (stats?.hasActiveLoan) {
+      alert('Repay your active loan before leaving the circle.');
+      return;
+    }
+    if (window.confirm('Leave this Trust Circle? Your staked XLM will be refunded.')) {
+      leaveCircle(publicKey);
+    }
+  };
 
   const handleCreate = () => {
     if (!circleName.trim()) {
@@ -289,30 +306,40 @@ function CircleManagement({ stats, circleDetails, circleCount, publicKey, onSucc
       <h3 className="text-lg font-bold text-white mb-3">Trust Circle</h3>
       
       {hasCircle ? (
-        <div className="bg-white/5 p-3 rounded-lg flex-1 grid grid-cols-2 gap-3">
-          <div>
-            <p className="text-white/60 text-sm mb-1">Circle ID</p>
-            <p className="text-white text-xl font-bold">{stats.circleId}</p>
+        <div className="bg-white/5 p-3 rounded-lg flex-1 flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-white/60 text-sm mb-1">Circle ID</p>
+              <p className="text-white text-xl font-bold">{stats.circleId}</p>
+            </div>
+
+            {circleDetails && (
+              <>
+                <div>
+                  <p className="text-white/60 text-sm mb-1">Circle Score</p>
+                  <p className="text-white text-xl font-bold">{circleDetails.averageScore}</p>
+                </div>
+
+                <div>
+                  <p className="text-white/60 text-sm mb-1">Name</p>
+                  <p className="text-white text-base truncate">{circleDetails.name}</p>
+                </div>
+
+                <div>
+                  <p className="text-white/60 text-sm mb-1">Members</p>
+                  <p className="text-white text-base">{circleDetails.memberCount} / 3+</p>
+                </div>
+              </>
+            )}
           </div>
-          
-          {circleDetails && (
-            <>
-              <div>
-                <p className="text-white/60 text-sm mb-1">Circle Score</p>
-                <p className="text-white text-xl font-bold">{circleDetails.averageScore}</p>
-              </div>
-              
-              <div>
-                <p className="text-white/60 text-sm mb-1">Name</p>
-                <p className="text-white text-base truncate">{circleDetails.name}</p>
-              </div>
-              
-              <div>
-                <p className="text-white/60 text-sm mb-1">Members</p>
-                <p className="text-white text-base">{circleDetails.memberCount} / 3+</p>
-              </div>
-            </>
-          )}
+
+          <button
+            onClick={handleLeave}
+            disabled={isLeaving}
+            className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-300 py-1.5 text-xs rounded-lg font-semibold transition border border-red-500/30 disabled:opacity-50"
+          >
+            {isLeaving ? 'Leaving...' : 'Leave Circle'}
+          </button>
         </div>
       ) : (
         <>
@@ -420,7 +447,7 @@ function LoanEligibility({ stats }: { stats: any }) {
 
           <div>
             <p className="text-white/60 text-sm mb-1">Duration</p>
-            <p className="text-white text-base">7 days</p>
+            <p className="text-white text-base">7-90 days</p>
           </div>
         </div>
       ) : (
@@ -436,12 +463,14 @@ function LoanEligibility({ stats }: { stats: any }) {
 function RequestLoanForm({ stats, publicKey, onSuccess }: { stats: any; publicKey: string; onSuccess: () => void }) {
   const [amount, setAmount] = useState('');
   const [purpose, setPurpose] = useState('');
+  const [durationDays, setDurationDays] = useState<number>(LOAN_DURATION_OPTIONS_DAYS[0]);
   const { requestLoan, isPending, isSuccess, error } = useRequestLoan();
 
   useEffect(() => {
     if (isSuccess) {
       setAmount('');
       setPurpose('');
+      setDurationDays(LOAN_DURATION_OPTIONS_DAYS[0]);
       onSuccess();
       alert('Loan request submitted!');
     }
@@ -463,7 +492,7 @@ function RequestLoanForm({ stats, publicKey, onSuccess }: { stats: any; publicKe
       alert('Please provide a loan purpose');
       return;
     }
-    requestLoan(publicKey, parseFloat(amount), purpose);
+    requestLoan(publicKey, parseFloat(amount), purpose, durationDays);
   };
 
   const hasCircle = stats?.circleId > 0;
@@ -505,6 +534,26 @@ function RequestLoanForm({ stats, publicKey, onSuccess }: { stats: any; publicKe
             />
           </div>
 
+          <div>
+            <label className="text-sm text-white/60 mb-2 block">Repayment Duration</label>
+            <div className="grid grid-cols-4 gap-2">
+              {LOAN_DURATION_OPTIONS_DAYS.map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  onClick={() => setDurationDays(days)}
+                  className={`py-2 text-sm rounded-lg font-semibold transition border ${
+                    durationDays === days
+                      ? 'bg-white/90 text-black border-white/90'
+                      : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                  }`}
+                >
+                  {days}d
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={isPending}
@@ -514,6 +563,36 @@ function RequestLoanForm({ stats, publicKey, onSuccess }: { stats: any; publicKe
           </button>
         </form>
       )}
+    </div>
+  );
+}
+
+// Due-Date Reminder Banner — warns when the active loan is due soon or overdue
+function LoanDueReminder({ loans, latestLedger }: { loans: Loan[]; latestLedger: number | null }) {
+  const activeLoan = loans.find(loan => loan.disbursed && !loan.repaid);
+
+  if (!activeLoan || latestLedger === null) return null;
+
+  const ledgersRemaining = activeLoan.dueLedger - latestLedger;
+  const soonThreshold = 2 * LEDGER_CONSTANTS.LEDGERS_PER_DAY; // warn within 2 days of due date
+
+  if (ledgersRemaining > soonThreshold) return null;
+
+  const isOverdue = ledgersRemaining <= 0;
+
+  return (
+    <div
+      className={`mb-6 rounded-lg p-4 border flex items-center justify-between ${
+        isOverdue
+          ? 'bg-red-500/10 border-red-500/30 text-red-200'
+          : 'bg-yellow-500/10 border-yellow-500/30 text-yellow-200'
+      }`}
+    >
+      <p className="text-sm font-semibold">
+        {isOverdue
+          ? `Loan #${activeLoan.id} is overdue by ${ledgersToTime(Math.abs(ledgersRemaining))}. Repay now to avoid a trust score penalty.`
+          : `Loan #${activeLoan.id} is due in ${ledgersToTime(ledgersRemaining)} — repay it on time to boost your trust score.`}
+      </p>
     </div>
   );
 }
