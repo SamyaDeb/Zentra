@@ -21,7 +21,7 @@
 | **Users Data & Review** |[Users Excel Sheet ](https://1drv.ms/x/c/9f264c155550732d/IQDv6drh97jETYdn9E1coIINAdDjcHDkIybLHCs_1tp4OFQ?e=2jMWP6) |
 ---
 
-## Level 5 Hackathon Submission Checklist
+## About
 
 | Requirement | Status | Evidence |
 |-------------|--------|----------|
@@ -64,7 +64,7 @@ Following the feedback round in [FEEDBACK.md](./FEEDBACK.md), this upgrade close
 
 ---
 
-## Contract & Transaction Details
+## Mainnet Contract & Transaction Details
 
 | Item | Value |
 |------|-------|
