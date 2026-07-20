@@ -111,9 +111,9 @@
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| Testnet used for development | ✅ Pass | Not mainnet |
-| RPC endpoints verified | ✅ Pass | Official Stellar endpoints |
-| Network passphrase correct | ✅ Pass | TESTNET passphrase used |
+| Testnet used for development | ✅ Pass | Mainnet release was preceded by testnet validation |
+| RPC endpoints verified | ✅ Pass | Mainnet RPC: `https://mainnet.sorobanrpc.com` |
+| Network passphrase correct | ✅ Pass | Public Stellar Network passphrase used |
 | Transaction timeout set | ✅ Pass | 180 seconds default |
 
 ### API Security
@@ -155,7 +155,7 @@
 2. ~~Fixed Loan Duration~~ — resolved in v1.1 audit, see below
 3. ~~No Circle Exit~~ — resolved in v1.1 audit, see below
 4. **Manual Default Handling:** Admin must manually penalize defaults
-5. **Testnet Only:** Not audited for mainnet deployment
+5. **Mainnet Operations:** Deployed, but liquidity controls and admin key management remain operational risks
 
 ### Recommended Improvements
 
@@ -163,7 +163,7 @@
 2. Add automated default detection
 3. ~~Enable circle exit with cooldown~~ — implemented (no cooldown; blocked only while a loan is active, see below)
 4. ~~Add flexible loan durations~~ — implemented, see below
-5. Professional security audit before mainnet
+5. Professional third-party security audit and multi-signature administration
 
 ---
 
@@ -231,7 +231,7 @@ All 26 contract unit tests pass after the upgrade (20 pre-existing + 6 new):
 
 ### Financial Regulations
 
-- Platform is experimental/testnet
+- Platform is experimental mainnet software; deployment does not imply regulatory approval
 - Not licensed for real financial services
 - Users must understand risks
 
@@ -246,7 +246,7 @@ All 26 contract unit tests pass after the upgrade (20 pre-existing + 6 new):
 | Infrastructure | 85/100 | ✅ Secure |
 | Operations | 80/100 | ⚠️ Needs improvement |
 
-**Overall Security Rating:** ✅ **PASS** (Suitable for Testnet)
+**Overall Security Rating:** ⚠️ **CONDITIONAL PASS** (Mainnet deployed; professional audit still recommended)
 
 ---
 
@@ -254,7 +254,7 @@ All 26 contract unit tests pass after the upgrade (20 pre-existing + 6 new):
 
 **Audited By:** Samya Deb  
 **Date:** March 29, 2026  
-**Recommendation:** Safe for testnet deployment. Requires professional audit before mainnet.
+**Recommendation:** Mainnet deployment completed after self-audit and regression testing. Obtain a professional third-party audit before scaling liquidity or user volume.
 
 ---
 
