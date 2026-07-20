@@ -26,7 +26,7 @@ Welcome to Zentra - Your decentralized trust-based lending platform on Stellar b
 Before using Zentra, you'll need:
 
 1. **Freighter Wallet** - Browser extension for Stellar
-2. **Test XLM** - For transactions on Stellar Testnet
+2. **XLM** - For transactions on Stellar Mainnet
 3. **Modern Web Browser** - Chrome, Firefox, or Edge
 
 ### Installation Steps
@@ -39,19 +39,19 @@ Before using Zentra, you'll need:
 4. Create a new wallet or import existing one
 5. **Save your secret key safely** - Never share it!
 
-#### 2. Switch to Testnet
+#### 2. Switch to the Public Network
 
 1. Open Freighter extension
 2. Click the settings icon (gear)
 3. Select "Network"
-4. Choose "Testnet"
+4. Choose "Public Network"
 
-#### 3. Fund Your Testnet Account
+#### 3. Fund Your Mainnet Account
 
 1. Copy your wallet address from Freighter
-2. Go to [https://laboratory.stellar.org/#account-creator?network=test](https://laboratory.stellar.org/#account-creator?network=test)
-3. Paste your address and click "Get test network lumens"
-4. Wait a few seconds for 10,000 XLM to arrive
+2. Transfer XLM from an exchange or another funded Stellar account
+3. Paste your address as the recipient and verify it carefully
+4. Wait for the payment to confirm on mainnet
 
 ---
 
@@ -353,7 +353,7 @@ If you're an admin, you can:
 **Solutions:**
 1. Ensure Freighter extension is installed
 2. Check if Freighter is unlocked
-3. Verify you're on Testnet (in Freighter settings)
+3. Verify you're on Public Network (in Freighter settings)
 4. Try refreshing the page
 5. Clear browser cache
 
@@ -364,7 +364,7 @@ If you're an admin, you can:
 **Solutions:**
 1. **Insufficient funds:** Check XLM balance for fees
 2. **Network congestion:** Wait 30 seconds and retry
-3. **Wrong network:** Ensure Freighter is on Testnet
+3. **Wrong network:** Ensure Freighter is on Public Network
 4. **Contract error:** Check if you meet requirements (e.g., circle has 3+ members)
 
 ### Can't Request Loan
@@ -380,7 +380,7 @@ If you're an admin, you can:
 **Problem:** Alert says "error" but transaction went through
 
 **Explanation:** This is a known XDR parsing issue. Check Stellar Explorer to verify:
-1. Go to [https://stellar.expert/explorer/testnet](https://stellar.expert/explorer/testnet)
+1. Go to [https://stellar.expert/explorer/public](https://stellar.expert/explorer/public)
 2. Search your wallet address
 3. View recent transactions
 4. If transaction shows "Success", ignore the alert
@@ -462,7 +462,7 @@ Yes — use the **Leave Circle** button on your dashboard. Your staked 10 XLM is
 
 - **GitHub Issues:** [Report bugs](https://github.com/SamyaDeb/Zentra/issues)
 - **Email Support:** sammodeb28@gmail.com
-- **Check Transactions:** [Stellar Expert Testnet](https://stellar.expert/explorer/testnet)
+- **Check Transactions:** [Stellar Expert Mainnet](https://stellar.expert/explorer/public)
 
 ---
 
@@ -491,4 +491,4 @@ Yes — use the **Leave Circle** button on your dashboard. Your staked 10 XLM is
 
 **Last Updated:** March 29, 2026  
 **Version:** 1.0  
-**Network:** Stellar Testnet
+**Network:** Stellar Mainnet

@@ -287,7 +287,7 @@ const loans = await contractClient.get_active_loans({
 
 // Get transaction history from Horizon
 const response = await fetch(
-  `https://horizon-testnet.stellar.org/accounts/${userAddress}/transactions?limit=20`
+  `https://horizon.stellar.org/accounts/${userAddress}/transactions?limit=20`
 );
 const txHistory = await response.json();
 ```
