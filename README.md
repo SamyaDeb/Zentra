@@ -259,8 +259,9 @@ cp .env.example .env.local
 
 Fill in the following:
 ```
-NEXT_PUBLIC_CONTRACT_ID=CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT
-NEXT_PUBLIC_NATIVE_TOKEN_ID=CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
+NEXT_PUBLIC_CONTRACT_ID=CATTV5OCFI6TZQF26ZROIEP2RCY7M3G3OYZTS4IZGPWWXREN337O5K4Q
+NEXT_PUBLIC_NATIVE_TOKEN_ID=CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA
+NEXT_PUBLIC_STELLAR_NETWORK=mainnet
 ```
 
 4. **Run development server**
@@ -341,7 +342,7 @@ Zentra/
 
 ## Frontend ↔ Contract Integration
 
-The frontend integrates directly with the deployed TrustCircles Soroban contract (`CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT`) via `@stellar/stellar-sdk` and `@stellar/freighter-api`.
+The frontend integrates directly with the deployed mainnet TrustCircles Soroban contract (`CATTV5OCFI6TZQF26ZROIEP2RCY7M3G3OYZTS4IZGPWWXREN337O5K4Q`) via `@stellar/stellar-sdk` and `@stellar/freighter-api`.
 
 ### Integration Files
 
@@ -360,9 +361,9 @@ Every write and read operation goes through `@stellar/stellar-sdk`'s `Contract.c
 import { Contract, TransactionBuilder, BASE_FEE, Networks,
          rpc, nativeToScVal, Address } from "@stellar/stellar-sdk";
 
-const CONTRACT_ID = "CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT";
+const CONTRACT_ID = "CATTV5OCFI6TZQF26ZROIEP2RCY7M3G3OYZTS4IZGPWWXREN337O5K4Q";
 const contract = new Contract(CONTRACT_ID);
-const server   = new rpc.Server("https://soroban-testnet.stellar.org");
+const server   = new rpc.Server("https://mainnet.sorobanrpc.com");
 
 // Read — simulate only (no signature required)
 const tx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: Networks.TESTNET })

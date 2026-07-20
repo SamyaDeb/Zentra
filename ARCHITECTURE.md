@@ -108,7 +108,7 @@ Key Functions:
 
 ### 3. Smart Contract Layer (Soroban/Rust)
 
-**Contract Address:** `CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT`
+**Mainnet Contract Address:** `CATTV5OCFI6TZQF26ZROIEP2RCY7M3G3OYZTS4IZGPWWXREN337O5K4Q`
 
 **Core Modules:**
 
@@ -261,7 +261,7 @@ Admin Dashboard → View Pending Loans → Check Trust Score
 - CDN: Vercel Edge Network
 
 **Smart Contract:**
-- Network: Stellar Testnet (Soroban)
+- Production network: Stellar Mainnet (Soroban)
 - Deployment: via Stellar CLI
 - Contract invocation: via Soroban RPC
 

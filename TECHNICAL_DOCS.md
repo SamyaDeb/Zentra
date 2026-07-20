@@ -41,7 +41,7 @@ token_id: Address    // Native XLM token contract address
 **Example (Stellar CLI):**
 ```bash
 stellar contract invoke \
-  --id CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT \
+  --id CATTV5OCFI6TZQF26ZROIEP2RCY7M3G3OYZTS4IZGPWWXREN337O5K4Q \
   --source admin-key \
   --network mainnet \
   -- \
@@ -706,7 +706,7 @@ stellar contract invoke \
   -- \
   initialize \
   --admin <ADMIN_ADDRESS> \
-  --token_id CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
+  --token_id CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA
 ```
 
 ---
@@ -796,7 +796,7 @@ fn test_create_circle() {
 | Service | URL |
 |---------|-----|
 | Horizon API | `https://horizon-testnet.stellar.org` |
-| Soroban RPC | `https://soroban-testnet.stellar.org` |
+| Soroban RPC | `https://mainnet.sorobanrpc.com` |
 | Stellar Expert | `https://stellar.expert/explorer/testnet` |
 | Friendbot | `https://friendbot.stellar.org` |
 
@@ -804,7 +804,7 @@ fn test_create_circle() {
 
 ```bash
 # Get trust score
-curl -X POST https://soroban-testnet.stellar.org \
+curl -X POST https://mainnet.sorobanrpc.com \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
