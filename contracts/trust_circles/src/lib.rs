@@ -72,6 +72,7 @@ pub struct Loan {
     pub approved: bool,
     pub disbursed: bool,
     pub repaid: bool,
+    pub defaulted: bool,
     pub purpose: String,
     pub duration_days: u32,
 }
@@ -151,6 +152,7 @@ pub enum Error {
     LoanNotOverdue = 24,
     InvalidLoanDuration = 25,
     CannotLeaveWithActiveLoan = 26,
+    LoanAlreadyDefaulted = 27,
 }
 
 // ============ CONTRACT ============
@@ -167,6 +169,10 @@ impl TrustCirclesContract {
         if storage::has_admin(&env) {
             return Err(Error::AlreadyInitialized);
         }
+
+        // Initialization assigns permanent administrative control and must be
+        // authorized by the address that will become admin.
+        admin.require_auth();
 
         storage::set_admin(&env, &admin);
         storage::set_token_id(&env, &token_id);
@@ -539,6 +545,7 @@ impl TrustCirclesContract {
             approved: false,
             disbursed: false,
             repaid: false,
+            defaulted: false,
             purpose: purpose.clone(),
             duration_days,
         };
@@ -591,11 +598,10 @@ impl TrustCirclesContract {
         // Set due date. In demo mode, use the fast admin-configured duration so
         // demos don't require waiting real days; otherwise use the borrower's
         // chosen repayment duration (7/30/60/90 days) converted to ledgers.
-        let loan_duration = if storage::get_demo_mode(&env) {
-            storage::get_demo_loan_duration(&env)
-        } else {
-            loan.duration_days * LEDGERS_PER_DAY
-        };
+        // Production loans always use the borrower-selected duration. The
+        // legacy demo-mode storage is intentionally ignored here so an admin
+        // toggle cannot silently create short-maturity mainnet loans.
+        let loan_duration = loan.duration_days * LEDGERS_PER_DAY;
         loan.due_ledger = env.ledger().sequence() + loan_duration;
 
         // Update member stats
@@ -648,6 +654,10 @@ impl TrustCirclesContract {
 
         if loan.repaid {
             return Err(Error::LoanAlreadyRepaid);
+        }
+
+        if loan.defaulted {
+            return Err(Error::LoanAlreadyDefaulted);
         }
 
         // Transfer repayment amount from borrower to contract
@@ -728,7 +738,7 @@ impl TrustCirclesContract {
         let admin = storage::get_admin(&env)?;
         admin.require_auth();
 
-        let loan = storage::get_loan(&env, loan_id)?;
+        let mut loan = storage::get_loan(&env, loan_id)?;
 
         if !loan.disbursed {
             return Err(Error::LoanNotDisbursed);
@@ -738,12 +748,21 @@ impl TrustCirclesContract {
             return Err(Error::LoanAlreadyRepaid);
         }
 
+        if loan.defaulted {
+            return Err(Error::LoanAlreadyDefaulted);
+        }
+
         // Check if sufficiently overdue (14 days = 241920 ledgers)
         if env.ledger().sequence() <= loan.due_ledger + 241920 {
             return Err(Error::LoanNotOverdue);
         }
 
         let borrower = loan.borrower.clone();
+
+        // Mark the loan before applying penalties so the same default cannot
+        // be submitted repeatedly to drain scores and emit duplicate events.
+        loan.defaulted = true;
+        storage::set_loan(&env, loan_id, &loan);
 
         if let Some(mut member) = storage::get_member(&env, &borrower) {
             // Slash individual score
