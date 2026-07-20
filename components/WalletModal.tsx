@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { CURRENT_NETWORK } from '../config/stellarConfig';
 
 interface WalletModalProps {
   isOpen: boolean;
@@ -232,7 +233,7 @@ export default function WalletModal({
           <div className="px-6 py-3 bg-white/[0.02] border-t border-white/5">
             <div className="flex items-center justify-center gap-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-white/40 text-xs">Stellar Testnet</span>
+              <span className="text-white/40 text-xs">{CURRENT_NETWORK === 'mainnet' ? 'Stellar Mainnet' : 'Stellar Testnet'}</span>
             </div>
           </div>
         </div>

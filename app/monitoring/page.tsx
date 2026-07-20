@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { CONTRACT_CONFIG, CURRENT_NETWORK } from '../../config/stellarConfig';
 
 interface MetricData {
   totalLoans: number;
@@ -174,20 +175,20 @@ export default function MonitoringDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-gray-400 text-sm">Contract Address</p>
-              <p className="font-mono text-cyan-400 break-all">CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT</p>
+              <p className="font-mono text-cyan-400 break-all">{CONTRACT_CONFIG.contractId}</p>
             </div>
             <div>
               <p className="text-gray-400 text-sm">Network</p>
-              <p className="text-white">Stellar Testnet (Soroban)</p>
+                <p className="text-white">{CURRENT_NETWORK === 'mainnet' ? 'Stellar Mainnet (Soroban)' : 'Stellar Testnet (Soroban)'}</p>
             </div>
             <div>
               <p className="text-gray-400 text-sm">Token Contract (XLM SAC)</p>
-              <p className="font-mono text-cyan-400 break-all">CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC</p>
+              <p className="font-mono text-cyan-400 break-all">{CONTRACT_CONFIG.nativeTokenId}</p>
             </div>
             <div>
               <p className="text-gray-400 text-sm">Explorer</p>
               <a 
-                href="https://stellar.expert/explorer/testnet/contract/CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT"
+                href={`https://stellar.expert/explorer/${CURRENT_NETWORK === 'mainnet' ? 'public' : 'testnet'}/contract/${CONTRACT_CONFIG.contractId}`}
                 target="_blank"
                 className="text-cyan-400 hover:underline"
               >

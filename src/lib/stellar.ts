@@ -2,7 +2,7 @@
  * Stellar Contract Client for Zentra TrustCircles
  *
  * This module provides functions to interact with the TrustCircles
- * Soroban smart contract on Stellar (Contract ID: CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT).
+ * Soroban smart contract on Stellar (configured mainnet deployment by default).
  *
  * CONTRACT FUNCTION MAPPING (lib.rs → stellar.ts):
  * ─────────────────────────────────────────────────
