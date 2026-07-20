@@ -1,7 +1,7 @@
 /**
  * Stellar Network Configuration for Zentra
  * 
- * Configures connection to Stellar Testnet for the TrustCircles contract.
+ * Configures the Stellar network for the TrustCircles contract.
  */
 
 // Network configurations
@@ -15,27 +15,33 @@ export const STELLAR_NETWORKS = {
   mainnet: {
     networkPassphrase: "Public Global Stellar Network ; September 2015",
     horizonUrl: "https://horizon.stellar.org",
-    sorobanRpcUrl: "https://soroban.stellar.org",
+    sorobanRpcUrl: "https://mainnet.sorobanrpc.com",
     friendbotUrl: null,
   },
 } as const;
 
-// Current network (change to 'mainnet' for production)
-export const CURRENT_NETWORK: keyof typeof STELLAR_NETWORKS = "testnet";
+// Select the network at build time. Mainnet is the production default; set
+// NEXT_PUBLIC_STELLAR_NETWORK=testnet for local testnet development.
+const configuredNetwork = process.env.NEXT_PUBLIC_STELLAR_NETWORK;
+export const CURRENT_NETWORK: keyof typeof STELLAR_NETWORKS =
+  configuredNetwork === "testnet" ? "testnet" : "mainnet";
 
 // Get current network config
 export const networkConfig = STELLAR_NETWORKS[CURRENT_NETWORK];
 
 // Contract configuration
 export const CONTRACT_CONFIG = {
-  // Contract ID - will be set after deployment
-  contractId: process.env.NEXT_PUBLIC_CONTRACT_ID || "",
+  contractId:
+    process.env.NEXT_PUBLIC_CONTRACT_ID ||
+    "CATTV5OCFI6TZQF26ZROIEP2RCY7M3G3OYZTS4IZGPWWXREN337O5K4Q",
   
-  // Admin address (from instructions)
-  adminAddress: "GBDD6IDWYK5XM77GYSPKW7BC2KY3D4DPNP3MFQVHZJ3BCWMHB3T7NDWT",
+  // Mainnet admin address used to initialize the deployed contract
+  adminAddress: "GBALWWEQCFTHQ6FXSBRSB7X7WX5VVYBOVGT3GB34VABGY4MTB2F52FGX",
   
   // Native XLM token (SAC - Stellar Asset Contract for native XLM)
-  nativeTokenId: process.env.NEXT_PUBLIC_NATIVE_TOKEN_ID || "",
+  nativeTokenId:
+    process.env.NEXT_PUBLIC_NATIVE_TOKEN_ID ||
+    "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
 };
 
 // XLM Constants (7 decimals)
