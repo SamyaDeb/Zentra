@@ -19,10 +19,10 @@
 
 ### Contract Information
 
-- **Contract ID:** `CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT`
-- **Network:** Stellar Testnet
+- **Contract ID:** `CATTV5OCFI6TZQF26ZROIEP2RCY7M3G3OYZTS4IZGPWWXREN337O5K4Q`
+- **Network:** Stellar Mainnet
 - **Language:** Rust (Soroban SDK 22.0)
-- **Token:** Native XLM (SAC: `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`)
+- **Token:** Native XLM (SAC: `CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA`)
 
 ---
 
@@ -43,14 +43,14 @@ token_id: Address    // Native XLM token contract address
 stellar contract invoke \
   --id CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT \
   --source admin-key \
-  --network testnet \
+  --network mainnet \
   -- \
   initialize \
-  --admin GBDD6IDWYK5XM77GYSPKW7BC2KY3D4DPNP3MFQVHZJ3BCWMHB3T7NDWT \
-  --token_id CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
+  --admin GBALWWEQCFTHQ6FXSBRSB7X7WX5VVYBOVGT3GB34VABGY4MTB2F52FGX \
+  --token_id CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA
 ```
 
-**Authorization:** None (can only be called once)
+**Authorization:** The admin address must authorize initialization; it can only be called once.
 
 ---
 
@@ -545,8 +545,9 @@ npm install @stellar/stellar-sdk @stellar/freighter-api
 
 Create `.env.local`:
 ```env
-NEXT_PUBLIC_CONTRACT_ID=CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT
-NEXT_PUBLIC_NATIVE_TOKEN_ID=CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
+NEXT_PUBLIC_CONTRACT_ID=CATTV5OCFI6TZQF26ZROIEP2RCY7M3G3OYZTS4IZGPWWXREN337O5K4Q
+NEXT_PUBLIC_NATIVE_TOKEN_ID=CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA
+NEXT_PUBLIC_STELLAR_NETWORK=mainnet
 ```
 
 #### 3. Initialize Contract Client
@@ -555,7 +556,7 @@ NEXT_PUBLIC_NATIVE_TOKEN_ID=CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHG
 ```typescript
 import { Contract, SorobanRpc } from '@stellar/stellar-sdk';
 
-const rpcUrl = 'https://soroban-testnet.stellar.org';
+const rpcUrl = 'https://mainnet.sorobanrpc.com';
 const server = new SorobanRpc.Server(rpcUrl);
 
 export function getContractClient() {
@@ -583,7 +584,7 @@ async function submitContractTransaction(
   
   const transaction = new TransactionBuilder(account, {
     fee: '100',
-    networkPassphrase: Networks.TESTNET
+    networkPassphrase: Networks.PUBLIC
   })
     .addOperation(contract.call(method, ...params))
     .setTimeout(180)
@@ -598,12 +599,12 @@ async function submitContractTransaction(
 
   // 3. Sign with Freighter
   const signedXdr = await signTransaction(preparedTx.toXDR(), {
-    network: 'TESTNET',
-    networkPassphrase: Networks.TESTNET
+    network: 'PUBLIC',
+    networkPassphrase: Networks.PUBLIC
   });
 
   // 4. Submit
-  const tx = TransactionBuilder.fromXDR(signedXdr, Networks.TESTNET);
+  const tx = TransactionBuilder.fromXDR(signedXdr, Networks.PUBLIC);
   const result = await server.sendTransaction(tx);
 
   // 5. Wait for confirmation

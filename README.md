@@ -16,7 +16,7 @@
 |----------|------|
 | **Live Demo** | [https://zentra-flame.vercel.app](https://zentra-flame.vercel.app) |
 | **Demo Video** | [Watch on YouTube](https://youtu.be/wu8JSs2Qkpc?si=3HYdR1cBmW340v8s) |
-| **Smart Contract** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT) |
+| **Smart Contract** | [View on Stellar Expert](https://stellar.expert/explorer/public/contract/CATTV5OCFI6TZQF26ZROIEP2RCY7M3G3OYZTS4IZGPWWXREN337O5K4Q) |
 | **Monitoring Dashboard** | [/monitoring](https://zentra-flame.vercel.app/monitoring) |
 | **Users Data & Review** |[Users Excel Sheet ](https://1drv.ms/x/c/9f264c155550732d/IQDv6drh97jETYdn9E1coIINAdDjcHDkIybLHCs_1tp4OFQ?e=2jMWP6) |
 ---
@@ -27,7 +27,7 @@
 |-------------|--------|----------|
 | **Live Demo Deployed** | ✅ Complete | [https://zentra-flame.vercel.app](https://zentra-flame.vercel.app) |
 | **CI/CD Pipeline** | ✅ Complete | https://github.com/SamyaDeb/Zentra/actions/runs/23719242981 |
-| **Smart Contract Deployed** | ✅ Complete | `CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT` |
+| **Smart Contract Deployed** | ✅ Complete | Mainnet `CATTV5OCFI6TZQF26ZROIEP2RCY7M3G3OYZTS4IZGPWWXREN337O5K4Q` |
 | **Mobile Responsive** | ✅ Complete | See screenshots below |
 | **5 Loan Tiers Implemented** | ✅ Complete | Trust score ranges: 0-59, 60-69, 70-79, 80-89, 90-100 |
 | **Documentation** | ✅ Complete | ARCHITECTURE.md, TECHNICAL_DOCS.md, USER_GUIDE.md |
@@ -49,7 +49,7 @@ Following the feedback round in [FEEDBACK.md](./FEEDBACK.md), this upgrade close
 | **Technical standard: 20+ commits** | This upgrade alone shipped as a series of scoped commits (contract, frontend wiring, UI, mobile fix, onboarding, audit, docs) — see `git log` |
 | **Updated documentation** | README, SECURITY_CHECKLIST.md, and FEEDBACK.md all updated to reflect the new functions and resolved action items |
 
-> **Note on "real transaction activity":** the upgraded contract was redeployed to Stellar **testnet** at the address below (a new contract ID — Soroban WASM upgrades on Stellar require redeployment rather than an in-place patch) and exercised end-to-end with real signed transactions: circle creation, a second and third member joining (activating the circle), an admin liquidity deposit, a 30-day loan request, approval, disbursement, and repayment, and a `leave_circle` exit with stake refund. All 11 transactions are linked in the table below. This is testnet, not mainnet — no real-value funds are at risk, and this README does not claim otherwise.
+> The v1.1 contract was validated end-to-end on testnet before the production release. The production deployment below is a separate mainnet instance using the hardened WASM.
 
 ---
 
@@ -68,13 +68,21 @@ Following the feedback round in [FEEDBACK.md](./FEEDBACK.md), this upgrade close
 
 | Item | Value |
 |------|-------|
-| **Contract Address** | `CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT` |
-| **Admin Address** | `GAR44TV5W5O7Z4NBMV7VYSLVYCS4QMW7G5G5PWEEG2X5FAJUN7GDPCAK` |
-| **Token Contract (XLM SAC)** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
-| **Network** | Stellar Testnet (Soroban) |
-| **Deployed** | 2026-07-14 |
+| **Contract Address** | `CATTV5OCFI6TZQF26ZROIEP2RCY7M3G3OYZTS4IZGPWWXREN337O5K4Q` |
+| **Admin Address** | `GBALWWEQCFTHQ6FXSBRSB7X7WX5VVYBOVGT3GB34VABGY4MTB2F52FGX` |
+| **Token Contract (XLM SAC)** | `CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA` |
+| **Network** | Stellar Mainnet (Soroban) |
+| **Deployed** | 2026-07-20 |
 
-[View all transactions on Stellar Expert →](https://stellar.expert/explorer/testnet/contract/CDLE2JPZGDUJUKDAZKUPDRFPT75KN2ONHOY6PEFSYW4XXX3NZ7P6N3FT)
+[View the production contract on Stellar Expert →](https://stellar.expert/explorer/public/contract/CATTV5OCFI6TZQF26ZROIEP2RCY7M3G3OYZTS4IZGPWWXREN337O5K4Q)
+
+### Mainnet Deployment Transactions
+
+| Action | Transaction |
+|---|---|
+| Upload optimized WASM | [4f73abe1…fed7aae](https://stellar.expert/explorer/public/tx/4f73abe16c49ad3c8fe232e7e8861f0e9f7fff96dbdfd86bfbad081f0fed7aae) |
+| Deploy contract instance | [8552855e…309d57](https://stellar.expert/explorer/public/tx/8552855e132a02e00166b810e099a2def0f5a2d894d304630a9d298baf309d57) |
+| Initialize admin and XLM SAC | [d8ddb01c…b68b7f](https://stellar.expert/explorer/public/tx/d8ddb01c2c5cb29dd61ef1c786bfcb1a548c2b7e81602ed23eb91bfcb4b68b7f) |
 
 ### v1.1 Mainnet Redeployment — Real Transaction Log
 
@@ -96,7 +104,7 @@ Every row below is a real, independently verifiable testnet transaction exercisi
 
 Transaction #8's on-chain result confirms the duration-tier fix: `request_ledger: 3598960`, `due_ledger: 4117367` — a difference of exactly `518400` ledgers (`30 × 17280`), matching the borrower's chosen 30-day tier.
 
-> The public **Live Demo** and `NEXT_PUBLIC_CONTRACT_ID` on Vercel still point at the previous contract address until redeployed with this new one — update the env var and redeploy to bring the live UI in sync with the address above.
+> Configure production builds with `NEXT_PUBLIC_STELLAR_NETWORK=mainnet`, the mainnet contract ID above, and the mainnet XLM SAC.
 
 ---
 
