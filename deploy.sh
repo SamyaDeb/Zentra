@@ -4,9 +4,14 @@ set -e
 # Zentra TrustCircles Deployment Script
 # Deploys the Soroban smart contract and the Next.js frontend
 
-NETWORK="${NETWORK:-testnet}"
-RPC_URL="${SOROBAN_RPC_URL:-https://soroban-testnet.stellar.org}"
-NETWORK_PASSPHRASE="${NETWORK_PASSPHRASE:-Test SDF Network ; September 2015}"
+NETWORK="${NETWORK:-mainnet}"
+RPC_URL="${SOROBAN_RPC_URL:-https://mainnet.sorobanrpc.com}"
+NETWORK_PASSPHRASE="${NETWORK_PASSPHRASE:-Public Global Stellar Network ; September 2015}"
+
+if [ "$NETWORK" = "mainnet" ] && [ "${CONFIRM_MAINNET:-}" != "YES" ]; then
+  echo "Refusing mainnet deployment without CONFIRM_MAINNET=YES"
+  exit 1
+fi
 
 echo "=== Zentra Deployment Script ==="
 echo "Network: $NETWORK"
