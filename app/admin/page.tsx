@@ -21,7 +21,7 @@ import type { Loan, CircleDetails } from '@/src/lib/stellar';
 
 export default function AdminPage() {
   const [isMounted, setIsMounted] = useState(false);
-  const { isConnected, publicKey, isAdmin, isAdminLoading } = useFreighterWallet();
+  const { isConnected, publicKey, isAdmin, isAdminLoading, adminSignerCount } = useFreighterWallet();
   
   const { balance: contractBalance, refetch: refetchBalance } = useContractBalanceData(publicKey);
   const { loans: pendingLoans, refetch: refetchLoans } = useAllPendingLoans(publicKey);
@@ -134,7 +134,20 @@ export default function AdminPage() {
         <Navbar />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative" style={{ paddingTop: '180px', zIndex: 10 }}>
-          
+
+          {adminSignerCount !== null && adminSignerCount > 1 && (
+            <div className="mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+              <p className="text-yellow-300 text-sm">
+                This admin account requires signatures from {adminSignerCount} registered signers.
+                The single-click forms below (Deposit, Withdraw, Approve, Penalize, Unfreeze, Demo
+                Mode/Duration) sign with only your own connected wallet and will fail alone unless
+                your wallet&apos;s signature weight meets the threshold by itself — use the{' '}
+                <strong>Multi-Sig Co-Sign Console</strong> below instead. See{' '}
+                <code className="text-yellow-200">docs/multisig-admin-runbook.md</code>.
+              </p>
+            </div>
+          )}
+
           {/* Contract Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <StatCard 

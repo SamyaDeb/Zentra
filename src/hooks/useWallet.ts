@@ -16,7 +16,7 @@ import {
   getPublicKey,
 } from "@stellar/freighter-api";
 import { CURRENT_NETWORK } from "../../config/stellarConfig";
-import { isAuthorizedAdminSigner } from "../lib/horizon";
+import { fetchAdminAccountInfo, deriveIsAuthorizedSigner } from "../lib/horizon";
 
 // ============ WALLET HOOKS ============
 
@@ -51,6 +51,10 @@ export function useFreighterWallet() {
   // and for every co-signer once the account becomes a multisig.
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminLoading, setIsAdminLoading] = useState(false);
+  // Number of registered signers on the admin account (>1 once it's a
+  // multisig) — lets the UI warn that single-click admin actions will fail
+  // alone and point to the co-sign console instead.
+  const [adminSignerCount, setAdminSignerCount] = useState<number | null>(null);
 
   // Check initial connection state
   useEffect(() => {
@@ -287,15 +291,17 @@ export function useFreighterWallet() {
   useEffect(() => {
     if (!state.isConnected || !state.publicKey) {
       setIsAdmin(false);
+      setAdminSignerCount(null);
       return;
     }
 
     let cancelled = false;
     setIsAdminLoading(true);
 
-    isAuthorizedAdminSigner(state.publicKey).then((authorized) => {
+    fetchAdminAccountInfo().then((info) => {
       if (!cancelled) {
-        setIsAdmin(authorized);
+        setIsAdmin(deriveIsAuthorizedSigner(info, state.publicKey!));
+        setAdminSignerCount(info?.signers.filter((s) => s.weight > 0).length ?? null);
         setIsAdminLoading(false);
       }
     });
@@ -312,5 +318,6 @@ export function useFreighterWallet() {
     clearError,
     isAdmin,
     isAdminLoading,
+    adminSignerCount,
   };
 }

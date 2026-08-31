@@ -27,16 +27,18 @@ interface HorizonAccountResponse {
   thresholds?: HorizonThresholds;
 }
 
+export interface AdminAccountInfo {
+  signers: HorizonSigner[];
+  thresholds: HorizonThresholds;
+}
+
 /**
  * Fetch the admin account's current signers and thresholds from Horizon.
  * Returns null on any network/parse failure rather than throwing, since
  * callers use this for UI gating and should fail closed (not authorized)
  * rather than crash the page.
  */
-export async function fetchAdminAccountInfo(): Promise<{
-  signers: HorizonSigner[];
-  thresholds: HorizonThresholds;
-} | null> {
+export async function fetchAdminAccountInfo(): Promise<AdminAccountInfo | null> {
   try {
     const res = await fetch(
       `${networkConfig.horizonUrl}/accounts/${CONTRACT_CONFIG.adminAddress}`
@@ -53,12 +55,26 @@ export async function fetchAdminAccountInfo(): Promise<{
 }
 
 /**
+ * Whether `publicKey` is a registered signer (weight > 0) given an
+ * already-fetched AdminAccountInfo (or null, e.g. Horizon was
+ * unreachable) — shared by isAuthorizedAdminSigner and by callers like
+ * useFreighterWallet that also need the signer count and fetch info
+ * themselves rather than paying for two separate Horizon round trips.
+ */
+export function deriveIsAuthorizedSigner(
+  info: AdminAccountInfo | null,
+  publicKey: string
+): boolean {
+  if (!info) return publicKey === CONTRACT_CONFIG.adminAddress; // fail open only to today's baseline behavior
+  return info.signers.some((s) => s.key === publicKey && s.weight > 0);
+}
+
+/**
  * Whether `publicKey` is a registered signer (weight > 0) on the admin
  * account — true for the original sole admin key today, and for every
  * co-signer once the account is converted to a multisig.
  */
 export async function isAuthorizedAdminSigner(publicKey: string): Promise<boolean> {
   const info = await fetchAdminAccountInfo();
-  if (!info) return publicKey === CONTRACT_CONFIG.adminAddress; // fail open only to today's baseline behavior
-  return info.signers.some((s) => s.key === publicKey && s.weight > 0);
+  return deriveIsAuthorizedSigner(info, publicKey);
 }
