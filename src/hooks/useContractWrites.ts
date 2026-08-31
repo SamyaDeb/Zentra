@@ -90,47 +90,54 @@ function safeGetTransactionError(
 }
 
 /**
- * Build, sign, and submit a contract transaction
+ * Build and simulate a contract call, sourced from the given account,
+ * returning the unsigned (but resource-assembled) transaction XDR.
+ *
+ * Exported so the admin multi-sig co-sign flow (src/lib/adminMultisig.ts)
+ * can build a transaction sourced from the admin address itself — distinct
+ * from the connected wallet's own account — without duplicating this logic.
  */
-async function submitContractTransaction(
-  publicKey: string,
+export async function buildUnsignedTransaction(
+  sourceAccount: string,
   method: string,
   args: xdr.ScVal[]
 ): Promise<string> {
   const server = getSorobanServer();
   const contract = getContract();
 
+  const account = await server.getAccount(sourceAccount);
+
+  let tx = new TransactionBuilder(account, {
+    fee: BASE_FEE,
+    networkPassphrase: getNetworkPassphrase(),
+  })
+    .addOperation(contract.call(method, ...args))
+    .setTimeout(300)
+    .build();
+
+  const simulation = await server.simulateTransaction(tx);
+
+  if (rpc.Api.isSimulationError(simulation)) {
+    throw new Error(`Simulation failed: ${simulation.error}`);
+  }
+
+  // Prepare the transaction (adds resource footprint, etc.)
+  tx = rpc.assembleTransaction(tx, simulation).build();
+
+  return tx.toXDR();
+}
+
+/**
+ * Submit an already-signed transaction XDR and wait for confirmation.
+ *
+ * Exported so the admin multi-sig co-sign flow can reuse the exact same
+ * submit/poll/error-recovery behavior once enough co-signers have signed,
+ * instead of duplicating it.
+ */
+export async function submitSignedTransaction(signedXdr: string): Promise<string> {
+  const server = getSorobanServer();
+
   try {
-    // Get account
-    const account = await server.getAccount(publicKey);
-
-    // Build transaction
-    let tx = new TransactionBuilder(account, {
-      fee: BASE_FEE,
-      networkPassphrase: getNetworkPassphrase(),
-    })
-      .addOperation(contract.call(method, ...args))
-      .setTimeout(300)
-      .build();
-
-    // Simulate to get the prepared transaction
-    const simulation = await server.simulateTransaction(tx);
-
-    if (rpc.Api.isSimulationError(simulation)) {
-      throw new Error(`Simulation failed: ${simulation.error}`);
-    }
-
-    // Prepare the transaction (adds resource footprint, etc.)
-    tx = rpc.assembleTransaction(tx, simulation).build();
-
-    // Convert to XDR string for Freighter
-    const txXdr = tx.toXDR();
-
-    // Sign with Freighter
-    const signedXdr = await signTransaction(txXdr, {
-      networkPassphrase: getNetworkPassphrase(),
-    });
-
     // Parse the signed transaction from XDR
     // Important: Use Transaction type directly instead of TransactionBuilder
     let signedTx;
@@ -200,6 +207,31 @@ async function submitContractTransaction(
 
   } catch (error) {
     // Enhanced error logging
+    debugError("Transaction submission error:", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
+}
+
+/**
+ * Build, sign, and submit a contract transaction
+ */
+async function submitContractTransaction(
+  publicKey: string,
+  method: string,
+  args: xdr.ScVal[]
+): Promise<string> {
+  try {
+    const unsignedXdr = await buildUnsignedTransaction(publicKey, method, args);
+
+    // Sign with Freighter
+    const signedXdr = await signTransaction(unsignedXdr, {
+      networkPassphrase: getNetworkPassphrase(),
+    });
+
+    return await submitSignedTransaction(signedXdr);
+  } catch (error) {
     debugError("Contract transaction error:", {
       method,
       error: error instanceof Error ? error.message : String(error),

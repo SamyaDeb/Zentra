@@ -15,12 +15,13 @@ import {
   useUnfreezeAccount,
   useSetDemoLoanDuration,
 } from '@/src/hooks/useStellar';
+import AdminCoSignConsole from '@/components/AdminCoSignConsole';
 import { formatXlm, stroopsToXlm, CONTRACT_CONFIG } from '@/config/stellarConfig';
 import type { Loan, CircleDetails } from '@/src/lib/stellar';
 
 export default function AdminPage() {
   const [isMounted, setIsMounted] = useState(false);
-  const { isConnected, publicKey, isAdmin } = useFreighterWallet();
+  const { isConnected, publicKey, isAdmin, isAdminLoading } = useFreighterWallet();
   
   const { balance: contractBalance, refetch: refetchBalance } = useContractBalanceData(publicKey);
   const { loans: pendingLoans, refetch: refetchLoans } = useAllPendingLoans(publicKey);
@@ -55,6 +56,17 @@ export default function AdminPage() {
     );
   }
 
+  if (isAdminLoading) {
+    return (
+      <div className="min-h-screen bg-black relative overflow-hidden">
+        <Navbar />
+        <div className="flex items-center justify-center relative z-10" style={{ minHeight: 'calc(100vh - 4rem)' }}>
+          <p className="text-white/60">Checking admin signer status...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-black relative overflow-hidden">
@@ -66,7 +78,7 @@ export default function AdminPage() {
             <h1 className="text-3xl font-bold text-white mb-4">Access Denied</h1>
             <p className="text-white/80 mb-6">You are not authorized to access this page.</p>
             <p className="text-sm text-white/60 mb-2">Connected: {publicKey?.slice(0, 8)}...{publicKey?.slice(-8)}</p>
-            <p className="text-sm text-white/40">Required: {CONTRACT_CONFIG.adminAddress.slice(0, 8)}...</p>
+            <p className="text-sm text-white/40">Required: a registered signer on {CONTRACT_CONFIG.adminAddress.slice(0, 8)}...</p>
           </div>
         </div>
       </div>
@@ -140,6 +152,11 @@ export default function AdminPage() {
               value={circles.length.toString()}
               description="Active circles"
             />
+          </div>
+
+          {/* Multi-Sig Co-Sign Console */}
+          <div className="mb-6">
+            <AdminCoSignConsole />
           </div>
 
           {/* Liquidity & Demo Mode */}

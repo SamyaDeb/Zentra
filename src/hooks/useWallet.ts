@@ -15,7 +15,8 @@ import {
   getNetwork,
   getPublicKey,
 } from "@stellar/freighter-api";
-import { CONTRACT_CONFIG, CURRENT_NETWORK } from "../../config/stellarConfig";
+import { CURRENT_NETWORK } from "../../config/stellarConfig";
+import { isAuthorizedAdminSigner } from "../lib/horizon";
 
 // ============ WALLET HOOKS ============
 
@@ -44,6 +45,12 @@ export function useFreighterWallet() {
   });
 
   const watcherRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Whether the connected wallet is a registered signer on the admin
+  // account (see src/lib/horizon.ts) — true for the sole admin key today,
+  // and for every co-signer once the account becomes a multisig.
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(false);
 
   // Check initial connection state
   useEffect(() => {
@@ -276,11 +283,34 @@ export function useFreighterWallet() {
     setState(prev => ({ ...prev, error: null }));
   }, []);
 
+  // Check admin-signer status whenever the connected address changes
+  useEffect(() => {
+    if (!state.isConnected || !state.publicKey) {
+      setIsAdmin(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsAdminLoading(true);
+
+    isAuthorizedAdminSigner(state.publicKey).then((authorized) => {
+      if (!cancelled) {
+        setIsAdmin(authorized);
+        setIsAdminLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [state.isConnected, state.publicKey]);
+
   return {
     ...state,
     connect,
     disconnect,
     clearError,
-    isAdmin: state.publicKey === CONTRACT_CONFIG.adminAddress,
+    isAdmin,
+    isAdminLoading,
   };
 }
