@@ -1,7 +1,7 @@
 /** @type {import('jest').Config} */
 const config = {
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   // tsconfig.json resolves "@/*" against ["./src/*", "./*"] — src first,
   // repo root as fallback (so "@/lib/stellar" is src/lib/stellar.ts but
   // "@/components/Navbar" is components/Navbar.tsx at the repo root).
