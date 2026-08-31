@@ -21,10 +21,14 @@ import { CONTRACT_CONFIG } from '../../config/stellarConfig';
  */
 export function useRoleRedirect() {
   const router = useRouter();
-  const { publicKey, isConnected, isAdmin } = useFreighterWallet();
+  const { publicKey, isConnected, isAdmin, isAdminLoading } = useFreighterWallet();
 
   useEffect(() => {
-    if (!isConnected || !publicKey) {
+    // isAdmin resolves asynchronously (it checks the admin account's live
+    // signer set on Horizon — see src/lib/horizon.ts). Redirecting before
+    // that check resolves would send every wallet, admin included, to
+    // /user first and then bounce to /admin once isAdmin flips true.
+    if (!isConnected || !publicKey || isAdminLoading) {
       return;
     }
 
@@ -33,7 +37,7 @@ export function useRoleRedirect() {
     } else {
       router.push('/user');
     }
-  }, [publicKey, isConnected, isAdmin, router]);
+  }, [publicKey, isConnected, isAdmin, isAdminLoading, router]);
 
   return {
     publicKey,
