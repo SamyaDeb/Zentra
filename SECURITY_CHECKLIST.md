@@ -98,9 +98,9 @@
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| npm audit passed | ✅ Pass | No critical vulnerabilities |
-| Dependencies up to date | ✅ Pass | Latest stable versions |
-| No known vulnerable packages | ✅ Pass | Verified with `npm audit` |
+| npm audit passed | ⚠️ Warning | `next` patched to 14.2.35 (was 14.2.0), clearing a critical auth-bypass CVE (2026-08-31). Production deps now show 2 remaining high-severity advisories that require a Next.js major-version bump — deferred, tracked below. |
+| Dependencies up to date | ⚠️ Warning | Patched, not latest: `next` 14.2.x (latest major is 16), `@stellar/stellar-sdk` 13.x (latest 17.x), `react`/`react-dom` 18.x (latest 19.x), `@stellar/freighter-api` 2.x (latest 6.x). Deliberately scoped to patch-only for this pass; see "Recommended Improvements". |
+| No known vulnerable packages | ⚠️ Warning | `npm audit --omit=dev` shows 2 high (Next.js, requires major bump); dev-only advisories cleared via `npm audit fix`. |
 | Lock file committed | ✅ Pass | package-lock.json in repo |
 
 ---
@@ -134,7 +134,7 @@
 |-------|--------|-------|
 | TypeScript strict mode | ✅ Pass | Type safety enforced |
 | ESLint configured | ✅ Pass | Code quality checks |
-| No console.log in prod | ⚠️ Warning | Some debug logs remain |
+| No console.log in prod | ✅ Pass | Remaining diagnostic `console.warn`/`console.error` calls are gated behind a `NODE_ENV !== "production"` check (`src/hooks/useContractWrites.ts`) |
 | Error handling implemented | ✅ Pass | Try-catch blocks in place |
 
 ### Monitoring
@@ -151,7 +151,11 @@
 
 ### Current Version
 
-1. **Single Admin:** Currently only one admin address can manage the platform
+1. **Single Admin (multisig cutover in progress):** One admin address still manages the platform
+   today. Converting it to a Stellar-native 2-of-3 multisig — no contract changes required, see
+   `docs/multisig-admin-runbook.md` — has an in-app co-sign console built and tested on testnet,
+   but the mainnet cutover itself is blocked: the live admin account holds only ~1.0006 XLM,
+   exactly the base reserve, with no headroom for the 2 new signers it needs.
 2. ~~Fixed Loan Duration~~ — resolved in v1.1 audit, see below
 3. ~~No Circle Exit~~ — resolved in v1.1 audit, see below
 4. **Manual Default Handling:** Admin must manually penalize defaults
@@ -159,7 +163,8 @@
 
 ### Recommended Improvements
 
-1. Implement multi-sig admin
+1. ~~Implement multi-sig admin~~ — in progress, see "Known Limitations" above and
+   `docs/multisig-admin-runbook.md`
 2. Add automated default detection
 3. ~~Enable circle exit with cooldown~~ — implemented (no cooldown; blocked only while a loan is active, see below)
 4. ~~Add flexible loan durations~~ — implemented, see below
@@ -218,6 +223,55 @@ All 26 contract unit tests pass after the upgrade (20 pre-existing + 6 new):
 `cargo test` in `contracts/`. New tests: `test_leave_circle_refunds_stake_and_deactivates`,
 `test_leave_circle_with_active_loan_fails`, `test_leave_circle_not_in_circle_fails`,
 `test_request_loan_invalid_duration`, `test_request_loan_flexible_duration_sets_due_ledger`.
+
+---
+
+## v1.2 Addendum — Dependency Patches, Admin Multisig Cutover Started
+
+**Date:** 2026-08-31
+**Scope:** Frontend-only. `contracts/` (the deployed Soroban WASM) was not touched or redeployed.
+
+### npm audit findings (Finding 1, corrected)
+
+The "Dependencies" section above previously claimed a clean `npm audit` with "latest stable
+versions" — that was stale. A real audit found 20 vulnerabilities, including 1 **critical**
+inside `next@14.2.0` itself (an auth-bypass advisory, CWE-285/863). Patched to `next@14.2.35`
+(clears the critical) and ran `npm audit fix` for the remaining dev-tooling advisories.
+Production-dependency audit now shows 2 remaining high-severity items, both requiring a Next.js
+*major* version bump (14→15/16) — deliberately deferred rather than bundled into a patch-only
+pass; tracked as a follow-up.
+
+### Admin multisig — in progress (Finding 2, mitigation underway)
+
+"Single Admin" (Known Limitations #1) has an active mitigation: converting the admin account to
+a Stellar-native 2-of-3 multisig requires **no contract changes** — `Address.require_auth()` on a
+classic account defers to that account's own signer/threshold configuration. Full rationale,
+ordering constraints, and verification steps: `docs/multisig-admin-runbook.md`.
+
+- Testnet dry run: passed (1-signature call correctly rejected, 2-of-3 co-signed call succeeded).
+- In-app co-sign console shipped (`components/AdminCoSignConsole.tsx`), so any registered signer
+  — not just the original key — can build, sign, hand off, and submit an admin transaction from
+  `/admin`. The admin-page access gate now checks the account's live Horizon signer set instead
+  of a hardcoded address, and the page warns when the account has become a multisig so the old
+  single-click admin forms aren't used by mistake once they'd fail alone.
+- Mainnet cutover: **blocked**, not yet performed. The live admin account
+  (`GBALWWEQCFTHQ6FXSBRSB7X7WX5VVYBOVGT3GB34VABGY4MTB2F52FGX`) holds only ~1.0006 XLM — exactly
+  the 1 XLM base reserve, with no headroom for the ~0.5 XLM reserve each new signer requires.
+  Nothing on-chain has changed; the one attempted transaction failed cleanly with
+  `SetOptions(LowReserve)` and only cost a network fee. Resumes once the account is funded.
+
+### Test infrastructure (Finding 3, fixed)
+
+`npm test` had silently reported "no tests found" for every prior audit in this document —
+not because the code was untested-but-fine, but because the test *infrastructure* was broken:
+`jest.config.js`'s `@/` alias mapping didn't match `tsconfig.json`'s actual (src-first,
+repo-root-fallback) resolution, and `jest.setup.js` used an ESM `import` that crashed under
+the project's CommonJS-only transform config. Both fixed; the project now has a first real test
+suite (`config/stellarConfig.test.ts`, `src/lib/horizon.test.ts`) with 20 passing tests.
+
+### Regression Coverage
+
+`npm test`, `npm run lint`, `npx tsc --noEmit`, and `npm run build` all pass after these changes.
 
 ---
 
