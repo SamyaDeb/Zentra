@@ -240,6 +240,21 @@ Admin Dashboard → View Pending Loans → Check Trust Score
 - Integer overflow protection (Rust safety)
 - Authorization checks on all mutations
 
+**Admin Key Management:**
+- Admin-gated functions (`approve_loan`, `penalize_default`, `deposit_liquidity`, `withdraw`,
+  `set_demo_mode`, `set_demo_loan_duration`, `unfreeze_account`) all call
+  `admin.require_auth()` on a single `Address` stored at contract initialization — today that
+  address is one EOA, a real risk given it can unilaterally approve loans or withdraw pooled
+  liquidity.
+- The deployed contract has no admin-rotation or upgrade function, so this can't be fixed by
+  changing `contracts/` without a full redeploy. Instead, the mitigation is at the Stellar
+  account layer: `require_auth()` on a classic address defers to that account's own native
+  multi-signature configuration, so converting the *existing* admin account to an M-of-N
+  multisig (via a `SetOptions` operation) requires zero contract changes.
+- Status: in progress. Testnet dry run passed; an in-app co-sign console
+  (`components/AdminCoSignConsole.tsx`) is live on `/admin`; mainnet cutover is blocked on
+  funding the admin account's reserve. Full detail: `docs/multisig-admin-runbook.md`.
+
 **Wallet Security:**
 - Non-custodial (Freighter manages keys)
 - Transaction signing requires user approval
@@ -291,7 +306,8 @@ Production:
 ### 9. Scalability Considerations
 
 **Current Limitations:**
-- Single admin address (centralized approval)
+- Single admin address (centralized approval) — multisig cutover in progress, see
+  Section 6's "Admin Key Management" and `docs/multisig-admin-runbook.md`
 - Manual liquidity deposits
 - No automated interest calculation
 
@@ -299,8 +315,11 @@ Production:
 - ~~Fixed loan duration (7 days)~~ — borrower now picks 7/30/60/90 days
 - ~~No circle exit~~ — `leave_circle()` refunds stake and removes membership
 
+**In Progress:**
+- Multi-sig admin approval — account-level Stellar multisig, no contract changes; testnet
+  passed, in-app co-sign console shipped, mainnet cutover blocked on account funding
+
 **Future Improvements:**
-- Multi-sig admin approval
 - Automated market maker (AMM) for liquidity
 - Oracle integration for price feeds
 - Layer 2 scaling solutions
