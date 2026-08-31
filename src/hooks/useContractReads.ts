@@ -27,6 +27,8 @@ import {
   type CircleDetails,
   type Loan,
 } from "../lib/stellar";
+import { fetchAdminAccountInfo } from "../lib/horizon";
+import { CONTRACT_CONFIG } from "../../config/stellarConfig";
 
 // ============ DATA FETCHING HOOKS ============
 
@@ -255,4 +257,141 @@ export function useAllCircles(publicKey: string | null) {
   }, [refetch]);
 
   return { circles, isLoading, error, refetch };
+}
+
+export interface PlatformMetrics {
+  totalCircles: number;
+  activeCircles: number;
+  totalLoans: number;
+  activeLoans: number;
+  repaidLoans: number;
+  defaultedLoans: number;
+  defaultRatePercent: number;
+  contractBalance: bigint;
+  /** Deduplicated across all circle memberships — the contract has no
+   *  global user registry, so a user who has never joined a circle isn't
+   *  counted here. */
+  usersInCircles: number;
+  avgCircleTrustScore: number;
+}
+
+/**
+ * Hook for deriving real platform-wide stats straight from the contract's
+ * circle/loan/balance reads — used by the monitoring dashboard, which
+ * previously showed hardcoded mock numbers regardless of on-chain reality.
+ * No wallet connection is required: reads are simulated against the given
+ * (or default admin) account purely to obtain a valid source account for
+ * the simulation envelope, not for authorization.
+ */
+export function usePlatformMetrics(sourceAccount: string = CONTRACT_CONFIG.adminAddress) {
+  const [metrics, setMetrics] = useState<PlatformMetrics | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refetch = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [totalCircles, totalLoans, contractBalance] = await Promise.all([
+        getCircleCount(sourceAccount),
+        getLoanCount(sourceAccount),
+        getContractBalance(sourceAccount),
+      ]);
+
+      const [circles, loans] = await Promise.all([
+        Promise.all(
+          Array.from({ length: totalCircles }, (_, i) => getCircleDetails(sourceAccount, i + 1))
+        ),
+        Promise.all(
+          Array.from({ length: totalLoans }, (_, i) => getLoanDetails(sourceAccount, i + 1))
+        ),
+      ]);
+
+      const uniqueMembers = new Set(circles.flatMap((c) => c.members));
+      const avgCircleTrustScore = circles.length
+        ? Math.round(circles.reduce((sum, c) => sum + c.averageScore, 0) / circles.length)
+        : 0;
+
+      const activeLoans = loans.filter((l) => l.disbursed && !l.repaid && !l.defaulted).length;
+      const repaidLoans = loans.filter((l) => l.repaid).length;
+      const defaultedLoans = loans.filter((l) => l.defaulted).length;
+      const defaultRatePercent =
+        totalLoans > 0 ? Math.round((defaultedLoans / totalLoans) * 1000) / 10 : 0;
+
+      setMetrics({
+        totalCircles,
+        activeCircles: circles.filter((c) => c.isActive).length,
+        totalLoans,
+        activeLoans,
+        repaidLoans,
+        defaultedLoans,
+        defaultRatePercent,
+        contractBalance,
+        usersInCircles: uniqueMembers.size,
+        avgCircleTrustScore,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch platform metrics");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [sourceAccount]);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  return { metrics, isLoading, error, refetch };
+}
+
+export interface NetworkHealth {
+  rpc: "healthy" | "down";
+  horizon: "healthy" | "down";
+  latestLedger: number | null;
+}
+
+/**
+ * Hook for polling real Soroban RPC / Horizon reachability — used by the
+ * monitoring dashboard, which previously showed a hardcoded "healthy"
+ * status regardless of whether the network was actually reachable.
+ */
+export function useNetworkHealth(pollIntervalMs: number = 30000) {
+  const [health, setHealth] = useState<NetworkHealth>({
+    rpc: "down",
+    horizon: "down",
+    latestLedger: null,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const check = async () => {
+      const [ledgerResult, horizonResult] = await Promise.allSettled([
+        getLatestLedgerSequence(),
+        fetchAdminAccountInfo(),
+      ]);
+
+      if (cancelled) return;
+
+      setHealth({
+        rpc: ledgerResult.status === "fulfilled" ? "healthy" : "down",
+        horizon:
+          horizonResult.status === "fulfilled" && horizonResult.value !== null
+            ? "healthy"
+            : "down",
+        latestLedger: ledgerResult.status === "fulfilled" ? ledgerResult.value : null,
+      });
+    };
+
+    check();
+    const interval = setInterval(check, pollIntervalMs);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [pollIntervalMs]);
+
+  return health;
 }

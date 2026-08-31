@@ -101,6 +101,7 @@ export interface Loan {
   approved: boolean;
   disbursed: boolean;
   repaid: boolean;
+  defaulted: boolean;
   purpose: string;
   durationDays: number;
 }
@@ -263,6 +264,7 @@ export async function getLoanDetails(
     approved: raw.approved as boolean,
     disbursed: raw.disbursed as boolean,
     repaid: raw.repaid as boolean,
+    defaulted: raw.defaulted as boolean,
     purpose: raw.purpose as string,
     durationDays: Number(raw.duration_days),
   };

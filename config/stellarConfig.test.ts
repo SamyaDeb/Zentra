@@ -9,13 +9,13 @@ import {
 
 describe('xlmToStroops / stroopsToXlm', () => {
   it('converts XLM to stroops using the 7-decimal factor', () => {
-    expect(xlmToStroops(1)).toBe(10_000_000n);
-    expect(xlmToStroops(0.5)).toBe(5_000_000n);
+    expect(xlmToStroops(1)).toBe(BigInt(10_000_000));
+    expect(xlmToStroops(0.5)).toBe(BigInt(5_000_000));
   });
 
   it('rounds fractional stroops rather than truncating', () => {
     // 1.23456785 XLM * 1e7 = 12345678.5 stroops -> rounds to 12345679
-    expect(xlmToStroops(1.23456785)).toBe(12_345_679n);
+    expect(xlmToStroops(1.23456785)).toBe(BigInt(12_345_679));
   });
 
   it('round-trips through stroopsToXlm', () => {
@@ -25,9 +25,9 @@ describe('xlmToStroops / stroopsToXlm', () => {
 
 describe('formatXlm', () => {
   it('formats stroops as a locale XLM string with the given decimals', () => {
-    expect(formatXlm(10_000_000n)).toBe('1.00');
-    expect(formatXlm(1_234_567_800n, 2)).toBe('123.46');
-    expect(formatXlm(1_000_000_000n, 0)).toBe('100');
+    expect(formatXlm(BigInt(10_000_000))).toBe('1.00');
+    expect(formatXlm(BigInt(1_234_567_800), 2)).toBe('123.46');
+    expect(formatXlm(BigInt(1_000_000_000), 0)).toBe('100');
   });
 });
 
