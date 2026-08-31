@@ -9,6 +9,8 @@ export default function CrossBorderPage() {
   const [recipient, setRecipient] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const tabs = ['deposit', 'withdraw', 'send'] as const;
+
   const currencies = [
     { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
     { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺' },
@@ -49,10 +51,10 @@ export default function CrossBorderPage() {
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6">
-          {['deposit', 'withdraw', 'send'].map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as any)}
+              onClick={() => setActiveTab(tab)}
               className={`px-6 py-2 rounded-lg font-medium transition-all ${
                 activeTab === tab
                   ? 'bg-cyan-600 text-white'

@@ -16,7 +16,7 @@ import {
   useLatestLedger,
 } from '@/src/hooks/useStellar';
 import { formatXlm, stroopsToXlm, ledgersToTime, LEDGER_CONSTANTS } from '@/config/stellarConfig';
-import { LOAN_DURATION_OPTIONS_DAYS, type Loan } from '@/src/lib/stellar';
+import { LOAN_DURATION_OPTIONS_DAYS, type Loan, type UserStats, type CircleDetails } from '@/src/lib/stellar';
 
 export default function UserPage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -229,7 +229,7 @@ export default function UserPage() {
 // first-time users so the borrower flow (circle → loan) is discoverable
 // without having to read the docs. Hides itself once the user has
 // completed a loan, or if manually dismissed.
-function OnboardingGuide({ stats, loans }: { stats: any; loans: Loan[] }) {
+function OnboardingGuide({ stats, loans }: { stats: UserStats | null; loans: Loan[] }) {
   const [dismissed, setDismissed] = useState(true); // default hidden until localStorage check runs
 
   useEffect(() => {
@@ -305,8 +305,8 @@ function ScoreCard({ title, score, color, description }: { title: string; score:
 
 // Circle Management Component
 function CircleManagement({ stats, circleDetails, circleCount, publicKey, onSuccess }: {
-  stats: any;
-  circleDetails: any;
+  stats: UserStats | null;
+  circleDetails: CircleDetails | null;
   circleCount: number;
   publicKey: string;
   onSuccess: () => void;
@@ -363,7 +363,7 @@ function CircleManagement({ stats, circleDetails, circleCount, publicKey, onSucc
     joinCircle(publicKey, Number(circleIdToJoin));
   };
 
-  const hasCircle = stats?.circleId > 0;
+  const hasCircle = (stats?.circleId || 0) > 0;
 
   return (
     <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20 h-[220px] flex flex-col">
@@ -374,7 +374,7 @@ function CircleManagement({ stats, circleDetails, circleCount, publicKey, onSucc
           <div className="grid grid-cols-2 gap-3">
             <div>
               <p className="text-white/60 text-sm mb-1">Circle ID</p>
-              <p className="text-white text-xl font-bold">{stats.circleId}</p>
+              <p className="text-white text-xl font-bold">{stats?.circleId}</p>
             </div>
 
             {circleDetails && (
@@ -487,8 +487,8 @@ function CircleManagement({ stats, circleDetails, circleCount, publicKey, onSucc
 }
 
 // Loan Eligibility Component
-function LoanEligibility({ stats }: { stats: any }) {
-  const hasCircle = stats?.circleId > 0;
+function LoanEligibility({ stats }: { stats: UserStats | null }) {
+  const hasCircle = (stats?.circleId || 0) > 0;
   
   const maxLoan = stats?.maxLoanAmount ? stroopsToXlm(stats.maxLoanAmount) : 0;
   const interestRate = stats?.interestRate || 0;
@@ -524,7 +524,7 @@ function LoanEligibility({ stats }: { stats: any }) {
 }
 
 // Request Loan Form
-function RequestLoanForm({ stats, publicKey, onSuccess }: { stats: any; publicKey: string; onSuccess: () => void }) {
+function RequestLoanForm({ stats, publicKey, onSuccess }: { stats: UserStats | null; publicKey: string; onSuccess: () => void }) {
   const [amount, setAmount] = useState('');
   const [purpose, setPurpose] = useState('');
   const [durationDays, setDurationDays] = useState<number>(LOAN_DURATION_OPTIONS_DAYS[0]);
@@ -559,7 +559,7 @@ function RequestLoanForm({ stats, publicKey, onSuccess }: { stats: any; publicKe
     requestLoan(publicKey, parseFloat(amount), purpose, durationDays);
   };
 
-  const hasCircle = stats?.circleId > 0;
+  const hasCircle = (stats?.circleId || 0) > 0;
   const hasActiveLoan = stats?.hasActiveLoan;
   const maxLoan = stats?.maxLoanAmount ? stroopsToXlm(stats.maxLoanAmount) : 100;
 

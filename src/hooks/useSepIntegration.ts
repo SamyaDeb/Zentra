@@ -64,8 +64,8 @@ export function useSepIntegration(
     try {
       const token = await authenticateWithAnchor(publicKey, signTransaction);
       setAnchorToken(token);
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -91,8 +91,8 @@ export function useSepIntegration(
       window.open(url, '_blank', 'width=600,height=800');
       
       return id;
-    } catch (err: any) {
-      setError(err.message || 'Deposit initiation failed');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Deposit initiation failed');
       throw err;
     } finally {
       setLoading(false);
@@ -124,8 +124,8 @@ export function useSepIntegration(
       window.open(url, '_blank', 'width=600,height=800');
       
       return id;
-    } catch (err: any) {
-      setError(err.message || 'Withdrawal initiation failed');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Withdrawal initiation failed');
       throw err;
     } finally {
       setLoading(false);
@@ -177,8 +177,8 @@ export function useSepIntegration(
       });
       
       return result;
-    } catch (err: any) {
-      setError(err.message || 'Cross-border payment failed');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Cross-border payment failed');
       throw err;
     } finally {
       setLoading(false);

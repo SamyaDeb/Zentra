@@ -16,7 +16,7 @@ import {
   useSetDemoLoanDuration,
 } from '@/src/hooks/useStellar';
 import { formatXlm, stroopsToXlm, CONTRACT_CONFIG } from '@/config/stellarConfig';
-import type { Loan } from '@/src/lib/stellar';
+import type { Loan, CircleDetails } from '@/src/lib/stellar';
 
 export default function AdminPage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -523,7 +523,7 @@ function SetDemoLoanDurationForm({ publicKey }: { publicKey: string }) {
 }
 
 // All Circles Display
-function AllCircles({ circles }: { circles: any[] }) {
+function AllCircles({ circles }: { circles: CircleDetails[] }) {
   return (
     <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20">
       <h3 className="text-xl font-bold text-white mb-4">All Trust Circles</h3>
